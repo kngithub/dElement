@@ -1,16 +1,15 @@
 
 Sorry, no real docs yet :(
-see [(mostly) german doc](http://javascript.knrs.de/K345/delement/)
-(maybe with a little help of a translation service)
 
-for now: (sry)
-* read the comments in delement.js
+for now:
+* read the (mostly) [german doc](http://javascript.knrs.de/K345/delement/)
+  (maybe with a little help of a translation service)
 * view delement-test.html for usage examples.  (**caution**! it's a test page, includes invalid test cases)
-
+* read the comments in delement.js
 
 
 # dElement()
-Create DOM node tree. Takes care of problems with older IEs
+Create DOM node tree.
 
 the main advantage of dElement comes with more complicated / nested structures or loops
 
@@ -53,10 +52,10 @@ HTML representation of above tree would be (minus line breaks and indentation):
 same node tree with vanilla code:
 
 ```javascript
-var a = document.createElement('a'),
-    im = document.createElement('img'),
-    sp1 = document.createElement('span'),
-    sp2 = document.createElement('span'),
+var a    = document.createElement('a'),
+    im   = document.createElement('img'),
+    sp1  = document.createElement('span'),
+    sp2  = document.createElement('span'),
     txt1 = document.createTextNode('Hello!'),
     txt2 = document.createTextNode('Naaaa');
 
@@ -72,12 +71,11 @@ sp1.appendChild(txt1);
 sp1.appendChild(sp2);
 a.appendChild(sp1);
 ```
-
 already gets slightly confusing here.
 
 ## another example:
 
-a select element with 3 options plus javascript change event handling
+a select element with 3 options plus simple javascript change event handling
 
 ```javascript
 var sel = K345.dElement({
@@ -153,8 +151,8 @@ var ul2 = K345.dElement({
 - [X] test multiple properties
 - [X] test new "condition" keyword
 - [X] create elements in loops
-- [ ] remove bugs
-- [ ] docs
+- [ ] remove all bugs
+- [ ] write docs
 
 
 # dAppend()
@@ -171,14 +169,20 @@ K345.dAppend(
 );
 ```
 
-where &lt;appendmode> is one of the following "constants":
+where &lt;appendmode> is one of the following "constants" or string values:
 
-* __K345.DAPPEND_APPEND__  -> append created element(s) as _last_ child of element (__default__)
-* __K345.DAPPEND_FIRST__   -> append created element(s) as _first_ child of element
-* __K345.DAPPEND_BEFORE__  -> insert created element(s) _before_ given element
-* __K345.DAPPEND_AFTER__   -> insert created element(s) _after_ given element
-* __K345.DAPPEND_REPLACE__ -> _replace_ element with created element(s)
-* __K345.DAPPEND_WIPE__    -> _wipe all children_ of element and append created element(s)
+* __K345.DAPPEND_APPEND__  or __'beforeEnd'__
+    -> append created element(s) as _last_ child of element (__default__)
+* __K345.DAPPEND_FIRST__   or __'afterBegin'__
+    -> append created element(s) as _first_ child of element
+* __K345.DAPPEND_BEFORE__  or __'beforeBegin'__
+    -> insert created element(s) _before_ given element
+* __K345.DAPPEND_AFTER__   or __'afterEnd'__
+    -> insert created element(s) _after_ given element
+* __K345.DAPPEND_REPLACE__ or __'replaceElement'__
+    -> _replace_ element with created element(s)
+* __K345.DAPPEND_WIPE__    or __'wipeContent'__
+    -> _wipe all children_ of element and append created element(s)
 
 
 
