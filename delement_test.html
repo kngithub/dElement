@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<title>dElement test page</title>
+<style type="text/css">
+	html {
+		background: #000;
+	}
+
+	body {
+		width: 87%;
+		margin: 1.9em auto;
+		padding: 0.5em 3em 2em 1em;
+		background: #FFFFF4;
+		outline: 1px solid yellow;
+	}
+
+	p {
+		font-size: 104%;
+	}
+
+	ul, li {
+		margin: 0;
+		padding: 0;
+	}
+
+	ul {
+		background-color: #ddd;
+		border: 1px dashed #000;
+		display: inline;
+		display: inline-block;
+		padding-left: 1.2em;
+		margin-bottom: 1em;
+	}
+
+	li {
+		padding: 0.1em 0.2em;
+	}
+
+	div#ediv {
+		background-color: #FEE;
+		cursor: default;
+		padding: 0.5em 0.3em;
+		border: 1px solid gray;
+	}
+
+	pre {
+		font-family: 'DejaVu Sans Mono', monospace;
+		white-space: pre;
+		white-space: pre-wrap;
+		line-height: 1.3em;
+		background-color: #EEE;
+		overflow: auto;
+		display: block;
+		padding: 0.9em 2.5em 0.9em 0.5em;
+		border: 1px solid gray;
+		min-height: 4em;
+	}
+
+	#big {
+		font-size: 2em;
+		color: navy;
+		background-color: #FCFCB6;
+		width: 4em;
+		text-align: center;
+		margin-top: 0.4em;
+		margin-left: 0.6em;
+		padding: 0 0.3em;
+	}
+
+	.alert {
+		border:3px ridge #D72;
+		padding: 0.4em 0.8em;
+	}
+
+	.err {
+		color: #FFF;
+		background-color: maroon;
+		border: 1px solid #D00;
+	}
+
+	.desc {
+		display: inline-block;
+		margin: 0.7em 0 0.1em 0 !important;
+		border-bottom: 1px dashed green;
+	}
+
+	#radioout1, #radioout2 {
+		width: 15em;
+		height: 1.6em;
+		border: 1px solid blue;
+		margin: 0.2em;
+		background-color: #EEF;
+		text-align: center;
+	}
+
+	#extsyn.u {
+		text-decoration: underline;
+	}
+
+	button.test {
+		color: green;
+	}
+
+</style>
+<script type="text/javascript" src="../setup.js"></script>
+<script type="text/javascript" src="../array16.js"></script>
+<script type="text/javascript" src="../function.js"></script>
+<script type="text/javascript" src="../setup2.js"></script>
+<script type="text/javascript" src="../object.js"></script>
+<script type="text/javascript" src="../event.js"></script>
+<script type="text/javascript" src="../dom.js"></script>
+<script type="text/javascript" src="../basics.js"></script>
+<script type="text/javascript" src="delement.js"></script>
+</head>
+<body>
+
+<h1>dElement test</h1>
+
+<p>Note: this page contains several valid and invalid test cases for dElement, including generating invalid HTML. this is intentional</p>
+
+<h2>created elements:</h2>
+<div id="dynamisch">
+	<ul id="list"><li id="li000">static: this item is not generated</li></ul>
+
+	<div id="ediv"></div>
+	<!--p id="big">-</p-->
+	<p id="cce"></p>
+	<p id="cce-2"></p>
+
+	<div id="radi"></div>
+</div>
+
+<div id="radioout1">all</div>
+<div id="radioout2">all</div>
+
+<h2>innerHTML:</h2>
+<p class="alert">Caution! Depending on your browser the HTML string created by innerHTML may differ more or less from the expected HTML created by dElement. The only way to get an exact result of what was created is using a browser debug and development tools.(built in on most browsers, see documentation)</p>
+
+<pre id="inner">innerHTML</pre>
+
+<h2>Code</h2>
+<pre id="scode">source:</pre>
+
+<script type="text/javascript">
+//<![CDATA[
+var nodes = [],
+	nodes2 = [],
+	nodes3 = [],
+	myrefs = {},
+	mma = [],
+	mmo = {},
+	b, r, g1, g2;
+
+
+/*
+	txt		{string}
+		descriptive text for current test case. use empty string to omit [required]
+	arr		{array}
+		array to collect the created nodes [required]
+	what	{object | array | node(s)}
+		dElement element tree declaration [required]
+	catchex	{boolean}
+		catch exception thrown by dElement() [optional]
+*/
+function dTest(txt, arr, what, catchex) {
+	if (!Array.isArray(arr)) {
+		throw new Error('dTest: second parameter has to be an array');
+	}
+
+	// description
+	if (txt) {
+		var bb = document.createElement('b');
+		bb.appendChild(document.createTextNode(txt + ': '));
+		bb.className = 'desc';
+		arr.push(bb);
+	}
+
+	// push dElement output
+	if (!catchex) {
+		arr.push(K345.dElement(what));
+		return;
+	}
+
+	// catch an expected exception
+	try {
+		arr.push(K345.dElement(what));
+	}
+	catch (ex) {
+		var s = document.createElement('span');
+		s.className = 'err';
+		s.appendChild(document.createTextNode(ex.message));
+		arr.push(s);
+	}
+}
+
+function fakeEventFunc(fn, ty, el) {
+	console.log('fakeEventFunc: ', fn, ty, el);
+}
+
+//]]>
+</script>
+
+<script id="mycode" type="text/javascript">
+//<![CDATA[
+try {
+	dTest("", nodes, [{
+		elrefs: myrefs,
+		element: 'li',
+		id: 'li001',
+		child: [{  // array => multiple child elements
+			element: 'input',
+			type: 'checkbox',
+			name: 'cb10',
+			id: 'chk'
+		}, {
+			element: 'label',
+			'html-for': 'chk', // test camelCase conversion
+			child: {
+				text: 'a checkbox'
+			}
+		}]
+	}, {
+		element: 'li',
+		id: 'li002',
+		child: [{
+			element: 'input',
+			type: 'radio',
+			name: 'rb',
+			value: 55,
+			id: 'rdo'
+		}, {
+			element: 'label',
+			'for': 'rdo', // dElement converts this to htmlFor
+			child: {
+				text: 'a radio button'
+			},
+			onmouseover: function (e) {
+				this.style.backgroundColor = 'lime';
+			},
+			onmouseout: function (e) {
+				this.style.backgroundColor = '';
+			}
+		}]
+	}, {
+		element: 'li',
+		id: 'li003',
+		child: [{
+			element: 'input',
+			type: 'radio',
+			name: 'rb',
+			//checked: true,
+			checked: 'Checked',
+			value: 42,
+			id: 'rdp'
+		}, {
+			element: 'label',
+			'for': 'rdp',
+			child: {
+				text: 'another radio button (selected by default)'
+			}
+		}]
+	}, {
+		element: 'li',
+		id: 'li004',
+		child: [{
+			element: 'input',
+			type: 'button',
+			name: 'deadbtn',
+			value: 'out of use',
+			event: {
+				func: fakeEventFunc,
+				args: [function () {}, 'fart', '#elp#'] // onfart event :D
+			}
+		}, {
+			text: ' this button does nothing'
+		}]
+	}]);
+
+	dTest("button with event", nodes2, {
+		element: 'button',
+		type: 'button',
+		onclick: function () {
+			var v, s = 'outerHTML:\n';
+			if (this.outerHTML) {
+				v = this.outerHTML.match(/\svalue=(\"|\')(.+?)(?:\1)/i);
+				s += this.outerHTML;
+			}
+			else {
+				s += 'can\'t be determined';
+			}
+			s += '\n\ninnerHTML:\n'+ this.innerHTML + '\n\nvalue:\n';
+			if (v && v.length) {
+				s += v[2];
+			}
+			else {
+				s += (this.value || 'can\'t be determined');
+			}
+			alert(s);
+		},
+		child: 'I want to be clicked by you, just you - nobody else but you!',
+		value: 'hiho',
+		name: 'chj'
+	});
+
+	dTest("extended element syntax", nodes2, [{
+		element: 'button .u #extsyn \x03 @button =this is just a test... = don\'t worry, be #happy!\x1F .test',
+		text: 'created w extended syntax',
+		id: 'foo22', // should be overruled by extsyn
+		onclick: function () {
+			alert('value: ' + this.value + '\nid: ' + this.id);
+		}
+	}, {
+		text: ' button text should be green and underlined; id must be extsyn'
+	},{
+		element: ' #boofar $h2 .drdrdr ', style: 'margin: 0.5em 0', text: 'extended syntax headline h2'
+	}]);
+
+	dTest("html string with event", nodes2, {
+		element: 'sub',
+		html: '<span>HTML inserted <u onclick="alert(\'clicked\')">click me!</u> with click event</span>',
+		child: {
+			element: 'meta',
+			'http-equiv': 'whatever'
+		},
+		text: ' p1'
+	});
+
+	dTest("set and read data", nodes2, {
+		element: 'span',
+		text: 'click this!',
+		'data-the-answer': 42,
+		onclick: function () {
+			var el = this, t, da;
+			if ('dataset' in el && typeof el.dataset === 'object') {
+				da = el.dataset.theAnswer;
+				t = ' (dataset)';
+			}
+			if (!da) {
+				da = el['data-the-answer'];
+				t = ' (direct)';
+			}
+			if (!da) {
+				da = el.getAttribute('data-the-answer');
+				t = ' (getAttribute)';
+			}
+			alert("value of data attribute is " +  da + t);
+		},
+		child: ' mee!'
+	});
+
+	dTest("html & text", nodes2, {
+		html: '<s>strike through by HTML &lt;s&gt; element</s>',
+		text: ' some text'
+	});
+
+	var reffi = {};
+
+	dTest("collect & elrefs", nodes2, {
+		element: 'span',
+		id: 'i-1',
+		text: 1,
+		collect: mma,
+		elrefs: reffi,
+		collect_2: {obj: mmo, name: 'io-1'},
+		child: {
+			element: 'span',
+			collect: mma,
+			collect_2: {obj: mmo, name: 'io-2'},
+			text: 2,
+			id: 'i-2',
+			child:[{
+				element: 'span',
+				elrefs: null, // stopd saving refs, prevents i-3 and i-4 from being added
+				collect: mma,
+				collect_2: {obj: mmo, name: 'io-3'},
+				text: 3,
+				id: 'i-3',
+				child: {
+					element: 'span',
+					collect: mma,
+					collect_2: {obj: mmo, name: 'io-4'},
+					text: 4,
+					id: 'i-4'
+				}
+			}, {
+				element: 'span',
+				collect: mma,
+				elrefs: reffi, // refs will be added again
+				collect_2: {obj: mmo, name: 'io-5'},
+				text: 5,
+				id: 'i-5'
+			}]
+		}
+	});
+
+	// this section contains some implicit toString() calls
+	dTest("legal/illegal stuff + implicit toString() calls", nodes2, [
+		{text: 'foobar'},
+		{text: 2.34e-3},
+		{text: false},
+		{element: 'span', text: Math.PI, style: 'background-color: orange;margin: 0 0.3em;'},
+		{text: {element: 'hr'}},   // may not(!) generate hr element
+		{element: 'br'},
+		{text_000: [1,2,3,'hi', [5,'mee'], false], text_001: 'EOL'},
+		{element: 'br'},
+		{element: 'b', child: 88},
+		{element: 'br'},
+		{
+			element: 'a',
+			href:'http://wiki.selfhtml.org/',
+			type: 'text/plain',
+			child: 'a link that doesn\'t link (prevented by return false)',
+			onclick: function () {
+				return false;
+			}
+		},
+		{html: ''},
+		{element: 'hr', width: '40%', align: 'left'},
+		{comment: 'nö'},
+		{
+			element: 'span',
+			attribute: [
+				{name: 'foo', value: 'bar'},
+				{name: 'style',
+					value: 'border: 3px dashed red;background-color: yellow;padding: 0 3px;'}
+			],
+			onclick: function () {
+				alert('value of attribute "value" is ' + this.getAttribute('foo'));
+			},
+			text: 'click here too'
+		}
+	]);
+
+	dTest("extended syntax w/o element node name", nodes2, {
+		element: '.foo #bar33 @text .input =please insert some text here'
+	}, true);
+
+	dTest("html string array + multiple events", nodes2, [{
+		element: 'span',
+		html: ['<u>underlined</u> ', '<strong>strong</strong> ', '<em>emphased</em>'],
+		event: [{
+			func: K345.events.add,
+			args: ['click', function (e) {
+				alert('Click 1/2');
+			}]
+		}, {
+			func: K345.events.add,
+			args: ['click', function (e) {
+				alert('Click 2/2');
+			}]
+		}]
+	}, {
+		element: 'span',
+		style: ['margin-left: 0.6em', 'background-color: blue', 'color: yellow'],
+		child: '<== click there'
+	}, {
+		element: 'br'
+	}, {
+		element: 'span',
+		child: {
+			element: 'span',
+			comm: 'mehhhhhh'
+		}
+	}, {
+		text: 'comments here in source code',
+		comment: ['comm1', undefined, 'comm2', 3, true],
+		comment_b: ['comm4', Infinity, 'comm5', null, ['comm6', false, 'comm7']]
+	}]);
+
+	var xxx = K345.dElement({element: 'span', text: 'yooo'});
+
+	dTest("clone", nodes2, [
+		xxx, {
+		clone: xxx
+	}]);
+
+	dTest("try to append child to empty element", nodes2, {
+			element: 'img#foo',
+			text_hoop: 'hoop'
+	}, true);
+
+	dTest("try to use illegal data name", nodes2, {
+		element: 'span',
+		'data-myText': 'hoop'
+	}, true);
+
+	dTest("loop !!n!!, start 1.2 step 0.25", nodes2, {
+		element: 'span',
+		text: ' !!n!! ',
+		loop: {
+			count: -5,
+			start: 1.2,
+			step: 0.25
+		}
+	});
+
+	dTest("loop [!!n!!]=>!!1.5n+1!!", nodes2, {
+		element: 'span',
+		text: ' [!!n!!]=>!!1.5n+1!! ',
+//		loopdeep: 12,
+		loop: {
+			count: 4.79, // count must be integer, value will be rounded
+			step: 0 // illegal value, will be set to 1
+		}
+	});
+
+	dTest("loop 20x start 2 step 2", nodes2, {
+		element: 'a',
+		text: '{!!n!!} ',
+		href: '#!!n!!',
+		loop: {
+			start: 2,
+			count: 20,
+			step: 2
+		}
+	});
+
+	dTest("loop 10x <li>!!n!!<span>!!n+1!!<span>!!2n+1!!</span></span></li>", nodes2, {
+		element: 'ol',
+		child: {
+			loopdeep: {
+				start: 0,
+				count: 10 // count must be integer, value will be rounded
+			},
+			element: 'li',
+			text: 'li-!!n!!\t',
+			child: {
+				element: 'span',
+				text: 'span-1:!!n+1!!\t',
+				child: {
+					element: 'span',
+					text: 'span-2:!!2n+1!!'
+				}
+			}
+		}
+	});
+
+	dTest("select with options + event", nodes2, [{
+		element: 'br'
+	}, {
+		element: 'select',    // select with three options
+		id: 'sel1',
+		onchange: function() {
+			b.innerHTML = this.value;
+		},
+		child: [{
+			element: 'option',
+			value: 'foo 1',
+			child: 'Option 1'
+		}, {
+			element: 'option',
+			selected: true,
+			value: 'bar 2',
+			text: 'Option 2'
+		}, {
+			element: 'option',
+			value: 'baz 3',
+			child: 'Option 3'
+		}]
+	}, {
+		element: 'span',
+		id: 'big'
+	}]);
+
+	dTest("extended sytax + comment", nodes3, {
+		element: 'H3 .generated #über-1 .headlines',
+		text: 'This is a <h3> headline',
+		comment: 'das ist geil, das ist geil; hurra, hurra der parser klappt'
+	});
+
+	dTest("regular dElement", nodes3, {
+		element: 'div',
+		event: {
+			func: K345.events.add,
+			args: ['click', function (e) {
+				var el = K345.events.getTarget(e);
+				if (el && el.nodeName.toLowerCase() == 'input') {
+					g1.innerHTML = el.value;
+				}
+			}]
+		},
+		child: [{
+			element: 'span',
+			text: 'Show: '
+		}, {
+			element: 'label',
+			child: {
+				element: 'input',
+				type: 'radio',
+				name: 'ashow',
+				value: 'all',
+				checked: true
+			},
+			text: ' all '
+		}, {
+			element: 'label',
+			child: {
+				element: 'input',
+				type: 'radio',
+				name: 'ashow',
+				value: 'only_right'
+			},
+			text: ' right '
+		}, {
+			element: 'label',
+			child: {
+				element: 'input',
+				type: 'radio',
+				name: 'ashow',
+				value: 'only_wrong'
+			},
+			text: ' wrong ',
+			style: 'margin-right: 1.2em'
+		}, {
+			text: ' Generated using individual properties'
+		}]
+	});
+
+	dTest("extended Syntax", nodes3, {
+		element: 'div',
+		event: {
+			func: K345.events.add,
+			args: ['click', function (e) {
+				var el = K345.events.getTarget(e);
+				if (el && el.nodeName.toLowerCase() == 'input') {
+					g2.innerHTML = el.value;
+				}
+			}]
+		},
+		child: [{
+			element: 'span',
+			text: 'Show: '
+		}, {
+			element: 'label',
+			child: {
+				element: 'input @radio ~ashow2',
+				value: 'all',
+				checked: true
+			},
+			text: ' all '
+		}, {
+			element: 'label',
+			child: {
+				element: 'input @radio ~ashow2',
+				value: 'only_right'
+			},
+			text: ' right '
+		}, {
+			element: 'label',
+			child: {
+				element: 'input @radio ~ashow2',
+				value: 'only_wrong'
+			},
+			text: ' wrong ',
+			style: 'margin-right: 1.2em'
+		}, {
+			text: ' Generated using extended element syntax'
+		}]
+	});
+} catch (ex) {
+	alert(ex.message);
+}
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+function repl1 (s) {
+	s = s.replace(/</g, '&lt;');
+	if (K345.ieVer !== undefined && K345.ieVer < 9) {
+		s = s.replace(/\r/g, '')
+			.replace(/\n/g, '<br>')
+			.replace(/ /g, '&nbsp;');
+	}
+	return s;
+}
+
+function repl2 (s) {
+	s = s.replace(/nodes\d*\.push\(/gi, 'tr = ')
+		.replace(/\)\);/g, ');')
+		.replace(/\t/g, '   ')
+		.replace(/\/\/<!\[CDATA\[[\r\n]*/g, '')
+		.replace(/\/\/\]\]>[\r\n]*/g, '')
+		.replace(/&/g, '&amp;');
+	return repl1(s);
+}
+
+function append(m) {
+	if (m) {
+		this[0].appendChild(m);
+		if (this[1]) { this[0].appendChild(document.createElement('br')); }
+	}
+}
+
+window.onload = function () {
+	var u = document.getElementById('list'),
+		d = document.getElementById('ediv'),
+		cx = document.getElementById('cce'),
+		cx2 = document.getElementById('cce-2'),
+		idc = [], idc2 = [],
+		i;
+
+	r = document.getElementById('radi');
+	g1 = document.getElementById('radioout1');
+	g2 = document.getElementById('radioout2');
+
+	nodes.forEach (append.bind([u, 0]));
+	nodes2.forEach(append.bind([d, 1]));
+	nodes3.forEach(append.bind([r, 1]));
+
+	for (i = 0; i < mma.length; i++) {
+		idc[i] = mma[i].id;
+	}
+	cx.innerHTML += 'collect arr: ' + idc.join(', ');
+	for (i in mmo) {
+		idc2.push(mmo[i].id);
+	}
+	cx2.innerHTML += 'collect obj: ' + idc2.join(', ');
+
+	b = document.getElementById('big');
+	b.innerHTML = document.getElementById('sel1').value;
+
+	document.getElementById('inner').innerHTML = repl1(
+		document.getElementById('dynamisch').innerHTML
+	);
+	document.getElementById('scode').innerHTML = repl2(
+		document.getElementById('mycode').innerHTML
+	);
+};
+
+//]]>
+</script>
+</body>
+</html>
