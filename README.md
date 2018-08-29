@@ -1,9 +1,13 @@
 
 Sorry, no real docs yet :(
-
-
-see [(mostly) german doc](http://javascript.knrs.de/K345/delement/)  
+see [(mostly) german doc](http://javascript.knrs.de/K345/delement/)
 (maybe with a little help of a translation service)
+
+for now: (sry)
+* read the comments in delement.js
+* view delement-test.html for usage examples.  (**caution**! it's a test page, includes invalid test cases)
+
+
 
 # dElement()
 Create DOM node tree. Takes care of problems with older IEs
@@ -26,10 +30,10 @@ var a = K345.dElement({
         	src: 'foo.png',
         	width: 458,
         	alt: 'fooooo me'
-        }, 
+        },
         {
         	text: 'Hello!'
-        }, 
+        },
         {
         	element: 'span',
         	text: 'Naaaa'
@@ -91,13 +95,13 @@ var sel = K345.dElement({
          element: 'option',
          value: 'foo 1',
          child: 'Option 1'
-      }, 
+      },
       {  // sibling 2
          element: 'option',
          selected: true,
          value: 'bar 2',
          text: 'Option 2'
-      }, 
+      },
       {  // sibling 3
          element: 'option',
          value: 'baz 3',
@@ -107,7 +111,7 @@ var sel = K345.dElement({
    });
 ```
 
-##extended syntax
+## extended syntax
 ```javascript
 // a button
 var inp = K345.dElement({
@@ -149,11 +153,6 @@ var ul2 = K345.dElement({
 </ul>
 ```
 
-## docs
-for now: (sry)
-* read the comments in delement.js
-* view delement-test.html for usage examples.  (**caution**! it's a test page, includes invalid test cases)
-
 ### todo list
 - [X] allow multiple properies
 - [X] test multiple properties
@@ -170,10 +169,10 @@ dAppend calls dElement and appends created elements to DOM tree.
 
 ```javascript
 // usage
-K345.dAppend(  
-    String <id> | Node <reference to element>,  
-    Object <declaration> 
-    [, Const <appendmode> = K345.DAPPEND_APPEND ] 
+K345.dAppend(
+    String <id> | Node <reference to element>,
+    Object <declaration>
+    [, Const <appendmode> = K345.DAPPEND_APPEND ]
 );
 ```
 
