@@ -94,12 +94,12 @@ var sel = K345.dElement({
         // sibling 2
         element: 'option',
         selected: true,
-        value: 'bar 2',
+        value: 'foo 2',
         text: 'Option 2'
     }, {
         // sibling 3
         element: 'option',
-        value: 'baz 3',
+        value: 'foo 3',
         child: 'Option 3'
     }]
 });
