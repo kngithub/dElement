@@ -18,35 +18,35 @@ the main advantage of dElement comes with more complicated / nested structures o
 
 ```javascript
 var a = K345.dElement({
-	element: 'a',
-	href: '/',
-	title: 'Home',
-	child: {
-		element: 'span',
-		className: 'noo',
-		child: [{ // array because span has more than one child
-			element: 'img',
-			src: 'foo.png',
-			width: 458,
-			alt: 'fooooo me'
-		}, {
-			text: 'Hello!'
-		}, {
-			element: 'span',
-			text: 'Naaaa'
-		}]
-	}
+    element: 'a',
+    href: '/',
+    title: 'Home',
+    child: {
+        element: 'span',
+        className: 'noo',
+        child: [{ // array because span has more than one child
+            element: 'img',
+            src: 'foo.png',
+            width: 458,
+            alt: 'fooooo me'
+        }, {
+            text: 'Hello!'
+        }, {
+            element: 'span',
+            text: 'Naaaa'
+        }]
+    }
 });
 ```
 HTML representation of above tree would be (minus line breaks and indentation):
 
 ```html
 <a href="/" title="Home">
-	<span class="noo">
-		<img src="foo.png" width="458" alt="fooooo me">
-		Hello!
-		<span>Naaaa</span>
-	</span>
+    <span class="noo">
+        <img src="foo.png" width="458" alt="fooooo me">
+        Hello!
+        <span>Naaaa</span>
+    </span>
 </a>
 ```
 
@@ -54,11 +54,11 @@ same node tree with vanilla code:
 
 ```javascript
 var a = document.createElement('a'),
-	im = document.createElement('img'),
-	sp1 = document.createElement('span'),
-	sp2 = document.createElement('span'),
-	txt1 = document.createTextNode('Hello!'),
-	txt2 = document.createTextNode('Naaaa');
+    im = document.createElement('img'),
+    sp1 = document.createElement('span'),
+    sp2 = document.createElement('span'),
+    txt1 = document.createTextNode('Hello!'),
+    txt2 = document.createTextNode('Naaaa');
 
 a.href = '/';
 a.title = 'Go home';
@@ -81,28 +81,28 @@ a select element with 3 options plus javascript change event handling
 
 ```javascript
 var sel = K345.dElement({
-	element: 'select',
-	id: 'sel1',
-	onchange: function() {
-		console.log(this.value);
-	},
-	child: [{ // array for sibling child nodes of select
-		// sibling 1
-		element: 'option',
-		value: 'foo 1',
-		child: 'Option 1'
-	}, {
-		// sibling 2
-		element: 'option',
-		selected: true,
-		value: 'bar 2',
-		text: 'Option 2'
-	}, {
-		// sibling 3
-		element: 'option',
-		value: 'baz 3',
-		child: 'Option 3'
-	}]
+    element: 'select',
+    id: 'sel1',
+    onchange: function() {
+        console.log(this.value);
+    },
+    child: [{ // array for sibling child nodes of select
+        // sibling 1
+        element: 'option',
+        value: 'foo 1',
+        child: 'Option 1'
+    }, {
+        // sibling 2
+        element: 'option',
+        selected: true,
+        value: 'bar 2',
+        text: 'Option 2'
+    }, {
+        // sibling 3
+        element: 'option',
+        value: 'baz 3',
+        child: 'Option 3'
+    }]
 });
 ```
 
@@ -110,12 +110,12 @@ var sel = K345.dElement({
 ```javascript
 // a button
 var inp = K345.dElement({
-	element: 'input @button .foo #mybutton .bar'
+    element: 'input @button .foo #mybutton .bar'
 });
 
 // input field with predefined value
 var inp2 = K345.dElement({
-	element: 'input @text .foo #myinput =my.name@example.org'
+    element: 'input @text .foo #myinput =my.name@example.org'
 });
 
 // code to append elements to DOM tree goes here
@@ -129,22 +129,22 @@ var inp2 = K345.dElement({
 ## create multiple elements by loop (including placeholder)
 ```javascript
 var ul2 = K345.dElement({
-	element: 'ul',
-	child: {
-		element: 'li',
-		id: 'item-!!n+1!!',
-		loop: 5,
-		text: '!!n!! times 2 plus 1 equals <b>!!2n+1!!</b>'
-	}
+    element: 'ul',
+    child: {
+        element: 'li',
+        id: 'item-!!n+1!!',
+        loop: 5,
+        text: '!!n!! times 2 plus 1 equals <b>!!2n+1!!</b>'
+    }
 });
 ```
 ```html
 <ul>
-	<li id="item-1">0 times 2 plus 1 equals <b>1</b></li>
-	<li id="item-2">1 times 2 plus 1 equals <b>3</b></li>
-	<li id="item-3">2 times 2 plus 1 equals <b>5</b></li>
-	<li id="item-4">3 times 2 plus 1 equals <b>7</b></li>
-	<li id="item-5">4 times 2 plus 1 equals <b>9</b></li>
+    <li id="item-1">0 times 2 plus 1 equals <b>1</b></li>
+    <li id="item-2">1 times 2 plus 1 equals <b>3</b></li>
+    <li id="item-3">2 times 2 plus 1 equals <b>5</b></li>
+    <li id="item-4">3 times 2 plus 1 equals <b>7</b></li>
+    <li id="item-5">4 times 2 plus 1 equals <b>9</b></li>
 </ul>
 ```
 
@@ -165,9 +165,9 @@ dAppend calls dElement and appends created elements to DOM tree.
 ```javascript
 // usage
 K345.dAppend(
-	String <id> | Node <reference to element>,
-	Object <declaration>
-	[, Const <appendmode> = K345.DAPPEND_APPEND ]
+    String <id> | Node <reference to element>,
+    Object <declaration>
+    [, Const <appendmode> = K345.DAPPEND_APPEND ]
 );
 ```
 
