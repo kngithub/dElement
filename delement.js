@@ -465,6 +465,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var step = 1,
 			start = 0,
 			cnt = 1,
+			lcnt = 0,
 			isdeep = hasOP(s, 'loopdeep'),
 			el, i, o, lprop, loopobj;
 
@@ -497,21 +498,22 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		cnt = Math.abs(Math.round(cnt)); /* make count a positive integer */
 		el = document.createDocumentFragment();
 
+		/* element loop */
 		for (i = start; i < (start + (step * cnt)); i += step) {
 			if (Math.floor(i) !== i) { /* float check */
 				i = parseFloat(i.toFixed(8), 10); /* avoid rounding errors */
 			}
-			o = replaceCounter(s, i, isdeep);
+			o = replaceCounter(s, i, lcnt, isdeep);
 			appendTree.call(el, o);
+			lcnt++;
 		}
-
 		s[lprop] = loopobj;
 		return el;
 	}
 
 
 	/* find placeholders and call replace function */
-	function replaceCounter(decl, i, isdeep) {
+	function replaceCounter(decl, i, c, isdeep) {
 		var o = shCopy(decl),
 			phreg = /\!\![^!\s]+\!\!/gi,
 			p, mch, ph, op;
@@ -525,11 +527,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				while ((ph = phreg.exec(o[p])) !== null) {
 					/* match counter, optional multiplicator and value to add */
 					mch = ph[0].match(
-						/\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?n([+-]\d+(?:\.\d+)?)?\!\!/i
-						/* !!   |    number      | mul    n| add/sub  number |  !! */
+						/\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/i
+						/* !!   |    number      | mul     nc  | add/sub  number |  !! */
 					);
-					if (Array.isArray(mch) && mch.length > 2) {
-						op = loopReplace(op, i, mch);
+					if (Array.isArray(mch) && mch.length > 3) {
+						op = loopReplace(
+							op,
+							(mch[2] === 'c' ? c : i),
+							mch
+						);
 					}
 				}
 
@@ -547,7 +553,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				(isdeep || loopdepth < 1)
 			) {
 				loopdepth++; /* increase depth counter */
-				o.child = replaceCounter(o.child, i, isdeep);
+				o.child = replaceCounter(o.child, i, c, isdeep);
 				loopdepth--;
 			}
 		}
