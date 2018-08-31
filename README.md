@@ -76,7 +76,8 @@ already gets slightly confusing here.
 ## another example:
 
 a select element with 3 options plus simple javascript change event handling.
-also watch the similar example in the loop section!
+
+watch the similar example in the loop section!
 
 ```javascript
 var sel = K345.dElement({
@@ -94,12 +95,12 @@ var sel = K345.dElement({
         // sibling 2
         element: 'option',
         selected: true,
-        value: 'foo 2',
+        value: 'bar 2',
         text: 'Option 2'
     }, {
         // sibling 3
         element: 'option',
-        value: 'foo 3',
+        value: 'baz 3',
         child: 'Option 3'
     }]
 });
@@ -157,8 +158,12 @@ var sel = K345.dElement({
     },
     child: {
         element: 'option',
-        loop: {count: 3, start: 1}, // start sets loop to 1,2,3 instead of 0,1,2
-        value: 'foo !!n!!',
+        loop: {
+            count: 3,
+            start: 1, // start sets loop to 1,2,3 instead of 0,1,2
+            values: ['foo', 'bar', 'baz'] // values for placeholder !!v!!
+        },
+        value: '!!v!! !!n!!',
         child: 'Option !!n!!'
     }
 });
@@ -190,21 +195,27 @@ K345.dAppend(
 where &lt;appendmode> is one of the following "constants" or string values:
 
 * __K345.DAPPEND_APPEND__  or __'beforeEnd'__
+
     append created element(s) as _last_ child of element (__default__)
 
 * __K345.DAPPEND_FIRST__   or __'afterBegin'__
+
     append created element(s) as _first_ child of element
 
 * __K345.DAPPEND_BEFORE__  or __'beforeBegin'__
+
     insert created element(s) _before_ given element
 
 * __K345.DAPPEND_AFTER__   or __'afterEnd'__
+
     insert created element(s) _after_ given element
 
 * __K345.DAPPEND_REPLACE__ or __'replaceElement'__
+
     _replace_ element with created element(s)
 
 * __K345.DAPPEND_WIPE__    or __'wipeContent'__
+
     _wipe all children_ of element and append created element(s)
 
 
