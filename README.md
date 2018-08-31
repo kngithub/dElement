@@ -76,8 +76,7 @@ already gets slightly confusing here.
 ## another example:
 
 a select element with 3 options plus simple javascript change event handling.
-
-watch the similar example in the loop section!
+<br>watch the similar example in the loop section!
 
 ```javascript
 var sel = K345.dElement({
@@ -198,24 +197,19 @@ where &lt;appendmode> is one of the following "constants" or string values:
 <br>    append created element(s) as _last_ child of element (__default__)
 
 * __K345.DAPPEND_FIRST__   or __'afterBegin'__
-
-    append created element(s) as _first_ child of element
+<br>    append created element(s) as _first_ child of element
 
 * __K345.DAPPEND_BEFORE__  or __'beforeBegin'__
-
-    insert created element(s) _before_ given element
+<br>    insert created element(s) _before_ given element
 
 * __K345.DAPPEND_AFTER__   or __'afterEnd'__
-
-    insert created element(s) _after_ given element
+<br>    insert created element(s) _after_ given element
 
 * __K345.DAPPEND_REPLACE__ or __'replaceElement'__
-
-    _replace_ element with created element(s)
+<br>    _replace_ element with created element(s)
 
 * __K345.DAPPEND_WIPE__    or __'wipeContent'__
-
-    _wipe all children_ of element and append created element(s)
+<br>    _wipe all children_ of element and append created element(s)
 
 
 
