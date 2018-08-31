@@ -195,8 +195,7 @@ K345.dAppend(
 where &lt;appendmode> is one of the following "constants" or string values:
 
 * __K345.DAPPEND_APPEND__  or __'beforeEnd'__
-
-    append created element(s) as _last_ child of element (__default__)
+<br>    append created element(s) as _last_ child of element (__default__)
 
 * __K345.DAPPEND_FIRST__   or __'afterBegin'__
 
