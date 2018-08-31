@@ -159,11 +159,10 @@ var sel = K345.dElement({
         element: 'option',
         loop: {
             count: 3,
-            start: 1, // start sets loop to 1,2,3 instead of 0,1,2
             values: ['foo', 'bar', 'baz'] // values for placeholder !!v!!
         },
-        value: '!!v!! !!n!!',
-        child: 'Option !!n!!'
+        value: '!!v!! !!n+1!!',
+        child: 'Option !!n+1!!'
     }
 });
 ```
