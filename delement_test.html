@@ -517,6 +517,18 @@ try {
 		}
 	});
 
+	dTest("loop with values array", nodes2, {
+		element: 'div',
+		child: {
+			element: 'span',
+			text: 'Die !!n+1!!. Frucht ist !!v!! ',
+			loop: {
+				count: 3,
+				values: ['ein Apfel', 'eine Birne', 'eine Mango']
+			}
+		}
+	});
+
 	dTest("loop 10x <li>!!n!!<span>!!n+1!!<span>!!2n+1!!</span></span></li>", nodes2, {
 		element: 'ol',
 		child: {
