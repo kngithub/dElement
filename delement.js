@@ -1,9 +1,6 @@
 /*!
 	delement.js ö
 	K345 2006-2018
-
-	no longer supports IE6/IE7
-
 */
 
 /* %% devel on %% */
@@ -47,7 +44,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	'param', 'source', 'track', 'wbr'];
 
 /* @@CODESTART DELEM "Javascript" */
-/*
+/**
 	dElement / dAppend
 	requires Array.isArray()
 	requires Array.prototype.indexOf()
@@ -56,6 +53,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	requires Array.prototype.filter()
 	requires K345.attrNames
 	requires K345.voidElements
+
+	@namespace dElement_internal
 */
 (function () {
 		/* internal vars */
@@ -79,8 +78,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		!isObj(K345.attrNames) ||
 		!Array.isArray(K345.voidElements)
 	) {
-		dError('A required methods/property is missing or an external value is of' +
-			' wrong type.');
+		dError('A required methods/property is missing or an external value' +
+			' is of wrong type.');
 	}
 
 	/* ==============  COMMON FUNCTIONS  ================= */
@@ -143,18 +142,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		});
 	}
 
-	/** throw error
-		@function */
-	dError = (function () {
-		var cons = isMeth(console, 'error');
-
-		return function (txt) {
-			txt = 'dElement Error:\n' + txt + '\n';
-			if (cons) { console.error(txt); }
-			throw new Error(txt);
-		};
-	})();
-
 	/** test: is item a string */
 	function isStr(item) {
 		return typeof item === 'string';
@@ -171,18 +158,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return ('function|unknown'.indexOf(t) > -1) || (t === 'object' && !!o[m]);
 	}
 
-	/** map property names */
-	function mapNames(o, nmap) {
-		var pr;
-		for (pr in nmap) {
-			if (hasOP(o, pr)) {
-				o[nmap[pr]] = o[pr];
-				delete o[pr];
-			}
-		}
-		return o;
-	}
-
 	/* create shallow copy of object. fallback to simplified Object.create */
 	shCopy = (isMeth(Object, 'create') && (Object.create({a: 3})).a === 3)
 		? function (o) {
@@ -193,6 +168,29 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			F.prototype = o;
 			return new F();
 		};
+
+	/** throw error
+		@function */
+	dError = (function () {
+		var cons = isMeth(console, 'error');
+
+		return function (txt) {
+			txt = 'dElement Error:\n' + txt + '\n';
+			if (cons) { console.error(txt); }
+			throw new Error(txt);
+		};
+	})();
+
+	/** map property names */
+	function mapNames(o, nmap) {
+		for (var pr in nmap) {
+			if (hasOP(o, pr)) {
+				o[nmap[pr]] = o[pr];
+				delete o[pr];
+			}
+		}
+		return o;
+	}
 
 	/* ================  VARIABLES AND DATA  ================= */
 
@@ -467,7 +465,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			cnt = 1,
 			lcnt = 0,
 			isdeep = hasOP(s, 'loopdeep'),
-			el, i, o, lprop, loopobj;
+			el, i, o, lprop, loopobj, lvals;
 
 		if (hasOP(s, 'loop') && isdeep) {
 			dError('You may use only one of "loop" OR "loopdeep", not both.');
@@ -490,12 +488,23 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			if (hasOP(loopobj, 'start') && !isNaN(loopobj.start)) {
 				start = Number(loopobj.start);
 			}
+
+			/* set values array for placeholder !!v!! */
+			if (hasOP(loopobj, 'values')) {
+				if (!Array.isArray(loopobj.values)) {
+					dError('loop property "values" has to be an array');
+				}
+				if (loopobj.values.length < loopobj.count) {
+					dError('"values" array has less elements than loop count');
+				}
+				lvals = loopobj.values;
+			}
 		}
 		else if (!isNaN(loopobj)) {
 			cnt = Number(loopobj);
 		}
-
 		cnt = Math.abs(Math.round(cnt)); /* make count a positive integer */
+
 		el = document.createDocumentFragment();
 
 		/* element loop */
@@ -503,7 +512,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			if (Math.floor(i) !== i) { /* float check */
 				i = parseFloat(i.toFixed(8), 10); /* avoid rounding errors */
 			}
-			o = replaceCounter(s, i, lcnt, isdeep);
+			o = replaceCounter(s, i, lcnt, isdeep, lvals);
 			appendTree.call(el, o);
 			lcnt++;
 		}
@@ -511,25 +520,42 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return el;
 	}
 
+	/**
+		find placeholders and replace them with committed values
 
-	/* find placeholders and call replace function */
-	function replaceCounter(decl, i, c, isdeep) {
+		@param decl   {Object}    element declaration
+		@param i      {Number}    calculated value
+		@param c      {Integer}   loop counter
+		@param isdeep {Boolean}   recursive replace in subdeclarations
+		@param v      {Array}     value replacement array
+		@returns      {Object}    declaration with replaced values
+		@memberOf dElement_internal
+	*/
+	function replaceCounter(decl, i, c, isdeep, v) {
 		var o = shCopy(decl),
-			phreg = /\!\![^!\s]+\!\!/gi,
+			phreg = /\!\![^v!\s]+\!\!/gi,
 			p, mch, ph, op;
 
 		for (p in o) {
-			/* replace all placeholders in string */
 			if (isStr(o[p])) {
+				/* replace all placeholders in string */
 				op = o[p];
+
+				/* replace !!v!! with array value */
+				if (Array.isArray(v) && op.indexOf('!!v!!') > -1) {
+					op = op.replace('!!v!!', v[c]);
+				}
 
 				/* for each placeholder in string */
 				while ((ph = phreg.exec(o[p])) !== null) {
 					/* match counter, optional multiplicator and value to add */
 					mch = ph[0].match(
 						/\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/i
-						/* !!   |    number      | mul     nc  | add/sub  number |  !! */
+						/* !!   |    number      | mul    | nc | add/sub  number |  !!
+									  [1]                  [2]        [3]            */
 					);
+
+					/* replace placeholder and do math */
 					if (Array.isArray(mch) && mch.length > 3) {
 						op = loopReplace(
 							op,
@@ -542,9 +568,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				/* write replaced string back to object property */
 				o[p] = op;
 			}
-			/* scan for placeholders in subdeclarations until a loop, loopstop or loopdeep
-				property is found or loop depth exceeds 1 on loop property */
 			else if (
+				/* scan for placeholders in subdeclarations until a loop, loopstop or
+					loopdeep property is found or loop depth exceeds 1 on loop property */
 				p === 'child' &&
 				isObj(o.child) &&
 				!hasOP(o.child, 'loop') &&
@@ -563,7 +589,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/* calculate value of placeholder and replace it */
 	function loopReplace(s, i, mch) {
 		var mul = Number(mch[1]),
-			add = Number(mch[2]);
+			add = Number(mch[3]);
 
 		if (!isNaN(mul) && mul !== 0) {
 			i *= mul;
@@ -586,12 +612,14 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				sc.obj[sc.name] = el;
 			}
 			else {
-				dError('duplicate declaration of ' + sc.name + ' in property "collect"');
+				dError(
+					'duplicate declaration of ' + sc.name + ' in property "collect"'
+				);
 			}
 		}
 		else {
-			dError('Value of property "collect" must be an array or an object containing' +
-				'the properties "obj" and "name".');
+			dError('Value of property "collect" must be an array or an object' +
+				' containing the properties "obj" and "name".');
 		}
 	}
 
@@ -740,9 +768,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				mode = ch;
 				i++;
 				if (!(/\$[a-z][a-z1-6]?/i.test(str))) { /* tag name not defined*/
-					pError(
-						'extended syntax without element node name definition\n"' + str + '"'
-					);
+					pError('extended syntax without element node name definition\n"' +
+						str + '"');
 				}
 			}
 
