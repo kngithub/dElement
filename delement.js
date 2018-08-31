@@ -183,7 +183,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** map property names */
 	function mapNames(o, nmap) {
-		for (var pr in nmap) {
+		var pr;
+		for (pr in nmap) {
 			if (hasOP(o, pr)) {
 				o[nmap[pr]] = o[pr];
 				delete o[pr];
