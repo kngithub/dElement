@@ -159,7 +159,7 @@ var sel = K345.dElement({
         element: 'option',
         loop: {
             count: 3,
-            values: ['foo', 'bar', 'baz'] // values for placeholder !!v!!
+            values: ['foo', 'bar', 'baz']   // values for placeholder !!v!!
         },
         value: '!!v!! !!n+1!!',
         child: 'Option !!n+1!!'
