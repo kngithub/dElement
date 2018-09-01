@@ -53,8 +53,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	requires Array.prototype.filter()
 	requires K345.attrNames
 	requires K345.voidElements
-
-	@namespace dElement_internal
 */
 (function () {
 		/* internal vars */
@@ -466,7 +464,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			cnt = 1,
 			lcnt = 0,
 			isdeep = hasOP(s, 'loopdeep'),
-			el, i, o, lprop, loopobj, lvals;
+			el, i, o, lprop, loopobj;
 
 		if (hasOP(s, 'loop') && isdeep) {
 			dError('You may use only one of "loop" OR "loopdeep", not both.');
@@ -478,6 +476,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		/* check if loopobj is either a valid object or a numeric value */
 		if (isObj(loopobj) && hasOP(loopobj, 'count') && !isNaN(loopobj.count)) {
+
 			/* validate loop values count, step and start */
 			cnt = Number(loopobj.count);
 			if (hasOP(loopobj, 'step') && !isNaN(loopobj.step)) {
@@ -490,15 +489,18 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				start = Number(loopobj.start);
 			}
 
-			/* set values array for placeholder !!v!! */
+			/* check values array for placeholder !!v!! */
 			if (hasOP(loopobj, 'values')) {
 				if (!Array.isArray(loopobj.values)) {
 					dError('loop property "values" has to be an array');
 				}
-				if (loopobj.values.length < loopobj.count) {
-					dError('"values" array has less elements than loop count');
+				if (
+					!hasOP(loopobj, 'valuesrepeat') &&
+					loopobj.values.length < loopobj.count
+				) {
+					dError('"values" array has less elements (' + loopobj.values.length +
+						') than loop count (' + loopobj.count + ')');
 				}
-				lvals = loopobj.values;
 			}
 		}
 		else if (!isNaN(loopobj)) {
@@ -513,7 +515,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			if (Math.floor(i) !== i) { /* float check */
 				i = parseFloat(i.toFixed(8), 10); /* avoid rounding errors */
 			}
-			o = replaceCounter(s, i, lcnt, isdeep, lvals);
+			o = replaceCounter(s, i, lcnt, isdeep, loopobj);
 			appendTree.call(el, o);
 			lcnt++;
 		}
@@ -528,34 +530,47 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		@param i      {Number}    calculated value
 		@param c      {Integer}   loop counter
 		@param isdeep {Boolean}   recursive replace in subdeclarations
-		@param v      {Array}     value replacement array
+		@param lobj   {Object}    loop configuration object
 		@returns      {Object}    declaration with replaced values
-		@memberOf dElement_internal
 	*/
-	function replaceCounter(decl, i, c, isdeep, v) {
-		var o = shCopy(decl),
-			phreg = /\!\![^v!\s]+\!\!/gi,
-			p, mch, ph, op;
+	function replaceCounter(decl, i, c, isdeep, lobj) {
+		var o, phreg, phreg_det, p, mch, ph, op, cc, v;
+
+		/* create shallow copy of declaration */
+		o = shCopy(decl);
+
+		/* raw RegExp to detect all !!..n..!! and !!..c..!! placeholders */
+		phreg = /\!\![^v!\s]+\!\!/gi;
+
+		/* detailed RegExp to get all parts of !!..n..!! and !!..c..!! placeholders */
+		phreg_det = /\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/i;
+					/*   !! |     number      | mul   | nc | add/sub  number |  !! */
+					/*      |      [1]        |       | [2]|       [3]       |     */
+
+		/* handle array index if "values" propery is an array */
+		if (hasOP(lobj, 'values')) {
+			v = lobj.values;
+			cc = (hasOP(lobj, 'valuesrepeat'))
+				? c % v.length
+				: c;
+		}
 
 		for (p in o) {
 			if (isStr(o[p])) {
-				/* replace all placeholders in string */
+			/* replace all placeholders in string */
+
 				op = o[p];
 
-				/* replace all placeholders "!!v!!" with array value */
+				/* replace each placeholder "!!v!!" with array value */
 				if (Array.isArray(v) && op.indexOf('!!v!!') > -1) {
-					op = op.replace(/\!\!v\!\!/gi, v[c]);
+					op = op.replace(/\!\!v\!\!/gi, v[cc]);
 				}
 
-				/* for each placeholder in string */
-				while ((ph = phreg.exec(o[p])) !== null) { /* must be o[p], not op */
+				/* replace each placeholder in string */
+				while ((ph = phreg.exec(o[p])) !== null) { /* o[p], not op */
 
 					/* match counter, optional multiplicator and value to add */
-					mch = ph[0].match(
-						/\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/i
-						/* !!   |    number      | mul    | nc | add/sub  number |  !! */
-						/*      |      [1]       |          [2]|       [3]       |     */
-					);
+					mch = ph[0].match(phreg_det);
 
 					/* replace placeholder and do math */
 					if (Array.isArray(mch) && mch.length > 3) {
@@ -571,8 +586,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				o[p] = op;
 			}
 			else if (
-				/* scan for placeholders in subdeclarations until a loop, loopstop or
-					loopdeep property is found or loop depth exceeds 1 on loop property */
+			/* scan for placeholders in subdeclarations until a loop, loopstop or
+				loopdeep property is found or loop depth exceeds 1 on loop property */
 				p === 'child' &&
 				isObj(o.child) &&
 				!hasOP(o.child, 'loop') &&
@@ -581,7 +596,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				(isdeep || loopdepth < 1)
 			) {
 				loopdepth++; /* increase depth counter */
-				o.child = replaceCounter(o.child, i, c, isdeep);
+				o.child = replaceCounter(o.child, i, c, isdeep, lobj);
 				loopdepth--;
 			}
 		}
