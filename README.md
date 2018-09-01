@@ -89,18 +89,18 @@ var sel = K345.dElement({
         // sibling 1
         element: 'option',
         value: 'foo 1',
-        child: 'Option 1'
+        text: 'Option 1'
     }, {
         // sibling 2
         element: 'option',
-        selected: true,
         value: 'bar 2',
-        text: 'Option 2'
+        text: 'Option 2',
+        selected: true
     }, {
         // sibling 3
         element: 'option',
         value: 'baz 3',
-        child: 'Option 3'
+        text: 'Option 3'
     }]
 });
 ```
@@ -162,9 +162,26 @@ var sel = K345.dElement({
             values: ['foo', 'bar', 'baz']   // values for placeholder !!v!!
         },
         value: '!!v!! !!n+1!!',
-        child: 'Option !!n+1!!'
+        text: 'Option !!n+1!!'
     }
 });
+sel.options[1].selected = true;
+```
+
+## loop with repeating value range
+```javascript
+var el = K345.dElement({
+    element: 'span',
+    text: '!!v!! ',
+    loop: {
+        count: 16,
+        values: ['A', 'B', 'C'],
+        valuesrepeat: true // without valuesrepeat, count(16) would exceed array lenght(3)
+    }
+});
+```
+```html
+<span>A B C A B C A B C A B C A B C A </span>
 ```
 
 ### todo list

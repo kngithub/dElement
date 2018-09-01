@@ -58,7 +58,7 @@
 		min-height: 4em;
 	}
 
-	#big {
+	#big, #bigz {
 		font-size: 2em;
 		color: navy;
 		background-color: #FCFCB6;
@@ -67,6 +67,10 @@
 		margin-top: 0.4em;
 		margin-left: 0.6em;
 		padding: 0 0.3em;
+	}
+
+	#bigz {
+		background-color: #D6FCD6;
 	}
 
 	.alert {
@@ -151,7 +155,7 @@ var nodes = [],
 	myrefs = {},
 	mma = [],
 	mmo = {},
-	b, r, g1, g2;
+	b, bz, r, g1, g2;
 
 
 /*
@@ -165,6 +169,8 @@ var nodes = [],
 		catch exception thrown by dElement() [optional]
 */
 function dTest(txt, arr, what, catchex) {
+	var tree = null;
+
 	if (!Array.isArray(arr)) {
 		throw new Error('dTest: second parameter has to be an array');
 	}
@@ -177,22 +183,28 @@ function dTest(txt, arr, what, catchex) {
 		arr.push(bb);
 	}
 
-	// push dElement output
-	if (!catchex) {
-		arr.push(K345.dElement(what));
-		return;
-	}
+//	// push dElement output
+//	if (!catchex) {
+//		tree = K345.dElement(what);
+//		arr.push(tree);
+//		return tree;
+//	}
 
 	// catch an expected exception
 	try {
-		arr.push(K345.dElement(what));
+		tree = K345.dElement(what);
+		arr.push(tree);
 	}
 	catch (ex) {
+		if (!catchex) {
+			throw ex;
+		}
 		var s = document.createElement('span');
 		s.className = 'err';
 		s.appendChild(document.createTextNode(ex.message));
 		arr.push(s);
 	}
+	return tree;
 }
 
 function fakeEventFunc(fn, ty, el) {
@@ -517,15 +529,22 @@ try {
 		}
 	});
 
-	dTest("loop with values array", nodes2, {
-		element: 'div',
-		child: {
-			element: 'span',
-			text: 'Die !!n+1!!. Frucht ist !!v!! ',
-			loop: {
-				count: 3,
-				values: ['ein Apfel', 'eine Birne', 'eine Mango']
-			}
+	dTest("loop with values array ['an apple', 'a pear', 'a banana']", nodes2, {
+		element: 'span',
+		text: 'fruit #!!n+1!! is !!v!!. ',
+		loop: {
+			count: 3,
+			values: ['an apple', 'a pear', 'a banana']
+		}
+	});
+
+	dTest("loop with values array ['A', 'B', 'C']; repeat mode", nodes2, {
+		element: 'span',
+		text: '!!v!! ',
+		loop: {
+			count: 16,
+			values: ['A', 'B', 'C'],
+			valuesrepeat: true
 		}
 	});
 
@@ -574,6 +593,28 @@ try {
 	}, {
 		element: 'span',
 		id: 'big'
+	}]);
+
+	dTest("select with options + event", nodes2, [{
+		element: 'br'
+	}, {
+		element: 'select',    // select with three options
+		id: 'sel2',
+		onchange: function() {
+			bz.innerHTML = this.value;
+		},
+		child: {
+			element: 'option',
+			value: '!!v!! !!n+1!!',
+			loop: {
+				count: 3,
+				values: ['foo', 'bar', 'baz']
+			},
+			child: 'Option !!n+1!!'
+		}
+	}, {
+		element: 'span',
+		id: 'bigz'
 	}]);
 
 	dTest("extended sytax + comment", nodes3, {
@@ -733,6 +774,8 @@ window.onload = function () {
 
 	b = document.getElementById('big');
 	b.innerHTML = document.getElementById('sel1').value;
+	bz = document.getElementById('bigz');
+	bz.innerHTML = document.getElementById('sel2').value;
 
 	document.getElementById('inner').innerHTML = repl1(
 		document.getElementById('dynamisch').innerHTML
