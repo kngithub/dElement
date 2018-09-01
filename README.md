@@ -3,7 +3,7 @@ Sorry, no real docs yet :(
 
 for now:
 * read the (mostly) [german doc](http://javascript.knrs.de/K345/delement/)
-  (maybe with a little help of a translation service)
+<br>  (maybe with a little help of a translation service)
 * view delement-test.html for usage examples.  (**caution**! it's a test page, includes invalid test cases)
 * read the comments in delement.js
 
@@ -209,6 +209,4 @@ where &lt;appendmode> is one of the following "constants" or string values:
 
 * __K345.DAPPEND_WIPE__    or __'wipeContent'__
 <br>    _wipe all children_ of element and append created element(s)
-
-
 
