@@ -542,18 +542,19 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				/* replace all placeholders in string */
 				op = o[p];
 
-				/* replace !!v!! with array value */
+				/* replace all placeholders "!!v!!" with array value */
 				if (Array.isArray(v) && op.indexOf('!!v!!') > -1) {
-					op = op.replace('!!v!!', v[c]);
+					op = op.replace(/\!\!v\!\!/gi, v[c]);
 				}
 
 				/* for each placeholder in string */
-				while ((ph = phreg.exec(o[p])) !== null) {
+				while ((ph = phreg.exec(o[p])) !== null) { /* must be o[p], not op */
+
 					/* match counter, optional multiplicator and value to add */
 					mch = ph[0].match(
 						/\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/i
-						/* !!   |    number      | mul    | nc | add/sub  number |  !!
-									  [1]                  [2]        [3]            */
+						/* !!   |    number      | mul    | nc | add/sub  number |  !! */
+						/*      |      [1]       |          [2]|       [3]       |     */
 					);
 
 					/* replace placeholder and do math */
