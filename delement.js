@@ -48,9 +48,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	dElement / dAppend
 	requires Array.isArray()
 	requires Array.prototype.indexOf()
-	requires Array.prototype.forEach()
-	requires Array.prototype.map()
 	requires Array.prototype.filter()
+	requires Array.prototype.forEach()
 	requires K345.attrNames
 	requires K345.voidElements
 */
@@ -69,9 +68,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		!isMeth(Array, 'isArray') ||
 		!isMeth(Function.prototype, 'bind') ||
 		!isMeth(Array.prototype, 'indexOf') ||
-		!isMeth(Array.prototype, 'forEach') ||
 		!isMeth(Array.prototype, 'filter') ||
-		!isMeth(Array.prototype, 'map') ||
+		!isMeth(Array.prototype, 'forEach') ||
 		!isMeth(document, 'createDocumentFragment') ||
 		!isObj(K345.attrNames) ||
 		!Array.isArray(K345.voidElements)
@@ -230,10 +228,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/* ==============  EVENTS  ================= */
 
 	/** handle events */
-	function setEvent(evtDef) {
+	function setEvent(evtDcl) {
 		var ix, fn,
-			o = evtDef.val,
-			el = evtDef.el;
+			o = evtDcl.val,
+			el = evtDcl.el;
 
 
 		o = mapNames(o, {
@@ -745,20 +743,25 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				modeChars[mo].stop !== false;
 		}
 
+		/* remove duplicate elements in array */
+		function removeDupes(cn, ix, arr) {
+			return ix === arr.indexOf(cn);
+		}
+
 		/** parseElemStr()
 			parse element string for id, name, class names, value and type and create
 			correlating properties
 
-			@param def {Object}
+			@param dcl {Object}
 				current element tree declaration object
 			@returns {Object}
 				altered element tree declaration object
 			@function
 			@name parseElemStr
 		*/
-		return function (def) {
+		return function (dcl) {
 			var mode = MODE_TAGNAME, /* default mode: string starts with tagname */
-				str = def.element, /* string to parse */
+				str = dcl.element, /* string to parse */
 				part = '', /* parsed word */
 				clNames = [], /* collects class names */
 				i = 0,
@@ -831,7 +834,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 					for next string */
 				switch (mode) {
 				case MODE_TAGNAME:
-					def.element = part;
+					dcl.element = part;
 					cnt[MODE_TAGNAME]++;
 					break;
 				case MODE_CLASS:
@@ -840,7 +843,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				default:
 					/* find matching attribute name, create property and set its value */
 					if (hasOP(modeChars, mode) && hasOP(modeChars[mode], 'attrName')) {
-						def[modeChars[mode].attrName] = part;
+						dcl[modeChars[mode].attrName] = part;
 					}
 					else {
 						pError('mode not supported: "' + mode + '"');
@@ -879,11 +882,22 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				}
 			} /* while (mode...) */
 
-			/* combine class names */
+			/* combine class names and remove dupes */
 			if (clNames.length > 0) {
-				def.className = clNames.join(' ');
+				if (hasOP(dcl, 'className')) {
+					clNames = clNames.concat(dcl.className.split(/\s+/));
+				}
+				if (clNames.length > 1) {
+					clNames = clNames.filter(removeDupes);
+					dcl.className = clNames.join(' ');
+				}
+				else {
+					dcl.className = clNames[0];
+				}
 			}
-			return def;
+
+			/* altered declaration */
+			return dcl;
 		};
 	})();
 
@@ -1005,9 +1019,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** create DOM tree and append to object
 		expects parent element as 'this', e.g. by calling it:
-		appendTree.call(el, def) */
-	function appendTree(def) {
-		var s = createTree(def);
+		appendTree.call(el, dcl) */
+	function appendTree(dcl) {
+		var s = createTree(dcl);
 		if (s) {
 			this.appendChild(s);
 		}
@@ -1343,7 +1357,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		@param {node|string} elem
 			element reference or id as string
 
-		@param {object} def
+		@param {object} dcl
 			element declaration object (see dElement)
 
 		@param {number} [mode=K345.DAPPEND_APPEND]
@@ -1368,7 +1382,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			node tree or null
 
 	*/
-	K345.dAppend = function (elem, def, mode) {
+	K345.dAppend = function (elem, dcl, mode) {
 		var nodes = null,
 			elc;
 
@@ -1377,7 +1391,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 
 		if (isNode(elem)) {
-			nodes = K345.dElement(def);
+			nodes = K345.dElement(dcl);
 			if (!nodes) {
 				return null;
 			}
