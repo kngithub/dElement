@@ -176,7 +176,8 @@ var el = K345.dElement({
     loop: {
         count: 16,
         values: ['A', 'B', 'C'],
-        valuesrepeat: true // without valuesrepeat, count(16) would exceed array lenght(3)
+        valuesrepeat: true
+        // without valuesrepeat, count(16) would exceed array lenght(3)
     }
 });
 ```
