@@ -618,9 +618,10 @@ try {
 	}]);
 
 	dTest("extended sytax + comment", nodes3, {
-		element: 'H3 .generated #über-1 .headlines',
+		element: 'H3 .generated #about-1 .headlines',
 		text: 'This is a <h3> headline',
-		comment: 'das ist geil, das ist geil; hurra, hurra der parser klappt'
+		comment: 'diz crazy par$er workz!',
+		className: 'foo   bar           baz  generated  bar' // contains some dupes which should be removed
 	});
 
 	dTest("regular dElement", nodes3, {
