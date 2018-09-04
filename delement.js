@@ -742,7 +742,13 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			return ix === arr.indexOf(cn);
 		}
 
-		/* join class names from extended syntax and className property, remove
+		/* */
+		function isStopMode(mo) {
+			return !mo || !hasOP(modeChars, mo) || !hasOP(modeChars[mo], 'stop') ||
+				modeChars[mo].stop !== false;
+		}
+
+		/** join class names from extended syntax and className property, remove
 			duplicates
 
 			@param {Object}    dcl    element declaration
@@ -756,12 +762,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			return (cArr.length > 1)
 				? cArr.filter(removeDupes).join(' ')
 				: cArr[0];
-		}
-
-		/* */
-		function isStopMode(mo) {
-			return !mo || !hasOP(modeChars, mo) || !hasOP(modeChars[mo], 'stop') ||
-				modeChars[mo].stop !== false;
 		}
 
 		/** parseElemStr()
