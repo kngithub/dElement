@@ -737,15 +737,31 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			dError('parser: ' + str);
 		}
 
+		/* remove duplicate elements in array */
+		function removeDupes(cn, ix, arr) {
+			return ix === arr.indexOf(cn);
+		}
+
+		/* join class names from extended syntax and className property, remove
+			duplicates
+
+			@param {Object}    dcl    element declaration
+			@param {Array}     cArr   array with class names from parse
+			@returns {String}         space separated class names as string
+		*/
+		function joinClassNames(dcl, cArr) {
+			if (hasOP(dcl, 'className')) {
+				cArr = cArr.concat(dcl.className.split(/\s+/));
+			}
+			return (cArr.length > 1)
+				? cArr.filter(removeDupes).join(' ')
+				: cArr[0];
+		}
+
 		/* */
 		function isStopMode(mo) {
 			return !mo || !hasOP(modeChars, mo) || !hasOP(modeChars[mo], 'stop') ||
 				modeChars[mo].stop !== false;
-		}
-
-		/* remove duplicate elements in array */
-		function removeDupes(cn, ix, arr) {
-			return ix === arr.indexOf(cn);
 		}
 
 		/** parseElemStr()
@@ -884,16 +900,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* combine class names and remove dupes */
 			if (clNames.length > 0) {
-				if (hasOP(dcl, 'className')) {
-					clNames = clNames.concat(dcl.className.split(/\s+/));
-				}
-				if (clNames.length > 1) {
-					clNames = clNames.filter(removeDupes);
-					dcl.className = clNames.join(' ');
-				}
-				else {
-					dcl.className = clNames[0];
-				}
+				dcl.className = joinClassNames(dcl, clNames);
 			}
 
 			/* altered declaration */
