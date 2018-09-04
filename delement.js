@@ -946,8 +946,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			});
 		}
 
-		return function (str) {
-			var d = createParent(str),
+		return function (hstr) {
+			var d = createParent(hstr),
 				txt = '',
 				frg, fc;
 
@@ -956,7 +956,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				trick.
 			*/
 			try {
-				d.innerHTML = str;
+				d.innerHTML = hstr;
 
 				/* if 'el' is a <template> element, it's 'content' property already
 					references a documentFragment, so we're done */
@@ -983,7 +983,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				}
 				dError(
 					txt + 'Error code: ' + ex.code + '\nError message: ' + ex.message +
-						'\nContent (leading 200 chars):\n"' + str.substring(0, 200) + '…"'
+						'\nContent (leading 200 chars):\n"' + hstr.substring(0, 200) + '…"'
 				);
 			}
 
