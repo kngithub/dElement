@@ -500,6 +500,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 						') than loop count (' + loopobj.count + ')');
 				}
 			}
+
+			/* validate chk/sel properties (checked or selected elements) */
+			['chk', 'sel'].forEach(function (item) {
+				if (hasOP(loopobj, item)) {
+					if (!Array.isArray(loopobj[item]) && isNaN(loopobj[item])) {
+						dError('type of loop property "' + item + '" must be array or number');
+					}
+				}
+			});
 		}
 		else if (!isNaN(loopobj)) {
 			cnt = Number(loopobj);
@@ -513,7 +522,25 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			if (Math.floor(i) !== i) { /* float check */
 				i = parseFloat(i.toFixed(8), 10); /* avoid rounding errors */
 			}
+
+			/* replace placeholders with current values */
 			o = replaceCounter(s, i, lcnt, isdeep, loopobj);
+
+			/* set checked/selected */
+			if (hasOP(loopobj, 'chk') || hasOP(loopobj, 'sel')) {
+			['chk', 'sel'].forEach(function (item) {
+				var pr, c = lcnt + 1;
+				if (hasOP(loopobj, item) && (
+					c === loopobj[item] ||
+					(Array.isArray(loopobj[item]) && loopobj[item].indexOf(c) > -1)
+				)) {
+					pr = (item === 'chk') ? 'checked' : 'selected';
+					o[pr] = true;
+				}
+			});
+			}
+
+			/* create element tree and append to fragment */
 			appendTree.call(frg, o);
 			lcnt++;
 		}

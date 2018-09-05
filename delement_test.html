@@ -608,7 +608,8 @@ try {
 			value: '!!v!! !!n+1!!',
 			loop: {
 				count: 3,
-				values: ['foo', 'bar', 'baz']
+				values: ['foo', 'bar', 'baz'],
+				sel: 2
 			},
 			child: 'Option !!n+1!!'
 		}
@@ -616,6 +617,15 @@ try {
 		element: 'span',
 		id: 'bigz'
 	}]);
+
+	dTest("", nodes2, {
+		element: 'input @checkbox',
+		name: 'bh',
+		loop: {
+			count: 6,
+			chk: [1, 2, 5]
+		}
+	});
 
 	dTest("extended sytax + comment", nodes3, {
 		element: 'H3 .generated #about-1 .headlines',

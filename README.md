@@ -159,13 +159,13 @@ var sel = K345.dElement({
         element: 'option',
         loop: {
             count: 3,
+            sel: 2,  // element 2 (index 1) will be selected by default
             values: ['foo', 'bar', 'baz']   // values for placeholder !!v!!
         },
         value: '!!v!! !!n+1!!',
         text: 'Option !!n+1!!'
     }
 });
-sel.options[1].selected = true;
 ```
 
 ## loop with repeating value range
