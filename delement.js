@@ -462,7 +462,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			cnt = 1,
 			lcnt = 0,
 			isdeep = hasOP(s, 'loopdeep'),
-			el, i, o, lprop, loopobj;
+			frg, i, o, lprop, loopobj;
 
 		if (hasOP(s, 'loop') && isdeep) {
 			dError('You may use only one of "loop" OR "loopdeep", not both.');
@@ -487,7 +487,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				start = Number(loopobj.start);
 			}
 
-			/* check values array for placeholder !!v!! */
+			/* validate values array (for placeholder !!v!!) */
 			if (hasOP(loopobj, 'values')) {
 				if (!Array.isArray(loopobj.values)) {
 					dError('loop property "values" has to be an array');
@@ -506,7 +506,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 		cnt = Math.abs(Math.round(cnt)); /* make count a positive integer */
 
-		el = document.createDocumentFragment();
+		frg = document.createDocumentFragment();
 
 		/* element loop */
 		for (i = start; i < (start + (step * cnt)); i += step) {
@@ -514,11 +514,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				i = parseFloat(i.toFixed(8), 10); /* avoid rounding errors */
 			}
 			o = replaceCounter(s, i, lcnt, isdeep, loopobj);
-			appendTree.call(el, o);
+			appendTree.call(frg, o);
 			lcnt++;
 		}
 		s[lprop] = loopobj;
-		return el;
+		return frg;
 	}
 
 	/**
