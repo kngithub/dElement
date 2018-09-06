@@ -183,12 +183,12 @@ function dTest(txt, arr, what, catchex) {
 		arr.push(bb);
 	}
 
-//	// push dElement output
-//	if (!catchex) {
-//		tree = K345.dElement(what);
-//		arr.push(tree);
-//		return tree;
-//	}
+	// push dElement output
+	if (!catchex) {
+		tree = K345.dElement(what);
+		arr.push(tree);
+		return tree;
+	}
 
 	// catch an expected exception
 	try {
@@ -196,9 +196,6 @@ function dTest(txt, arr, what, catchex) {
 		arr.push(tree);
 	}
 	catch (ex) {
-		if (!catchex) {
-			throw ex;
-		}
 		var s = document.createElement('span');
 		s.className = 'err';
 		s.appendChild(document.createTextNode(ex.message));
