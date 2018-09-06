@@ -460,9 +460,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var step = 1,
 			start = 0,
 			cnt = 1,
-			lcnt = 0,
 			isdeep = hasOP(s, 'loopdeep'),
-			frg, i, o, lprop, loopobj;
+			frg, i, o, lprop, loopobj, lcnt;
 
 		if (hasOP(s, 'loop') && isdeep) {
 			dError('You may use only one of "loop" OR "loopdeep", not both.');
@@ -492,6 +491,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				if (!Array.isArray(loopobj.values)) {
 					dError('loop property "values" has to be an array');
 				}
+
 				if (
 					!hasOP(loopobj, 'valuesrepeat') &&
 					loopobj.values.length < loopobj.count
@@ -518,6 +518,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		frg = document.createDocumentFragment();
 
 		/* element loop */
+		lcnt = 0;
 		for (i = start; i < (start + (step * cnt)); i += step) {
 			if (Math.floor(i) !== i) { /* float check */
 				i = parseFloat(i.toFixed(8), 10); /* avoid rounding errors */
@@ -528,16 +529,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* set checked/selected */
 			if (hasOP(loopobj, 'chk') || hasOP(loopobj, 'sel')) {
-			['chk', 'sel'].forEach(function (item) {
-				var pr, c = lcnt + 1;
-				if (hasOP(loopobj, item) && (
-					c === loopobj[item] ||
-					(Array.isArray(loopobj[item]) && loopobj[item].indexOf(c) > -1)
-				)) {
-					pr = (item === 'chk') ? 'checked' : 'selected';
-					o[pr] = true;
-				}
-			});
+				o = setCSFlags(o, loopobj, lcnt);
 			}
 
 			/* create element tree and append to fragment */
@@ -546,6 +538,26 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 		s[lprop] = loopobj;
 		return frg;
+	}
+
+	/* set checked or selected property */
+	function setCSFlags(o, lo, lc) {
+		var arr = ['sel', 'chk'],
+			i = arr.length,
+			c = lc + 1,
+			item, prp;
+
+		while (i--) {
+			item = arr[i];
+			if (hasOP(lo, item) && (
+				c === lo[item] ||
+				(Array.isArray(lo[item]) && lo[item].indexOf(c) > -1)
+			)) {
+				prp = (item === 'chk') ? 'checked' : 'selected';
+				o[prp] = true;
+			}
+		}
+		return o;
 	}
 
 	/**
