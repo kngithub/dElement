@@ -1,15 +1,22 @@
+<style>
+.pl-c {color: #3A2;}
+.pl-k {color: #77E;}
+</style>
 
-Sorry, no real docs yet :(
+
+Sorry, no real docs yet :disappointed:
 
 for now:
 * read the (mostly) [german doc](http://javascript.knrs.de/K345/delement/)
-<br>  (maybe with a little help of a translation service)
-* view delement-test.html for usage examples.  (**caution**! it's a test page, includes invalid test cases)
+  (maybe with a little help of a translation service)
+* view [test page](http://res.knrs.de/js/delement/delement_test.html) for usage examples.  (**caution**! it's a test page, includes invalid test cases)
 * read the comments in delement.js
 
 
 # dElement()
-Create DOM node tree. <sub>2006-2018</sub>
+:calendar: 2006-2018
+
+Create DOM node tree.
 
 the main advantage of dElement comes with more complicated / nested structures or loops
 
