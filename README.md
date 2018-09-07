@@ -9,7 +9,7 @@ for now:
 
 
 # dElement()
-Create DOM node tree.
+Create DOM node tree. //2006-2018//
 
 the main advantage of dElement comes with more complicated / nested structures or loops
 
@@ -23,17 +23,21 @@ var a = K345.dElement({
     child: {
         element: 'span',
         className: 'noo',
-        child: [{ // array because span has more than one child
-            element: 'img',
-            src: 'foo.png',
-            width: 458,
-            alt: 'fooooo me'
-        }, {
-            text: 'Hello!'
-        }, {
-            element: 'span',
-            text: 'Naaaa'
-        }]
+        child: [ // array because span has more than one child
+            {
+                element: 'img',
+                src: 'foo.png',
+                width: 458,
+                alt: 'fooooo me'
+            },
+            {
+                text: 'Hello!'
+            },
+            {
+                element: 'span',
+                text: 'Naaaa'
+            }
+        ]
     }
 });
 ```
@@ -159,8 +163,8 @@ var sel = K345.dElement({
         element: 'option',
         loop: {
             count: 3,
-            sel: 2,  // element 2 (index 1) will be selected by default
-            values: ['foo', 'bar', 'baz']   // values for placeholder !!v!!
+            sel: 2,    // 2nd element (index 1) will be selected by default
+            values: ['foo', 'bar', 'baz']    // values for placeholder !!v!!
         },
         value: '!!v!! !!n+1!!',
         text: 'Option !!n+1!!'
@@ -190,6 +194,8 @@ var el = K345.dElement({
 - [X] test multiple properties
 - [X] test new "condition" keyword
 - [X] create elements in loops
+- [X] commit values and checked/selected
+- [ ] write a extended and robust test page
 - [ ] remove all bugs (yeah, sure)
 - [ ] write docs (dream on)
 
