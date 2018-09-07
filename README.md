@@ -9,7 +9,7 @@ for now:
 
 
 # dElement()
-Create DOM node tree. // 2006-2018 //
+Create DOM node tree. <sub>2006-2018</sub>
 
 the main advantage of dElement comes with more complicated / nested structures or loops
 
