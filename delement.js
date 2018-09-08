@@ -937,14 +937,14 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			/* if HTML element 'template' is not available, determine best matching
 				parent element or use 'div' otherwise */
 			createParent = (function (str) {
-				var en = 'div',
+				var elp = 'div',
 					m;
 
 				m = str.match(/\<\s*([a-z][a-z1-6]*)/i);
 				if (m && m.length > 1 && hasOP(this, m[1])) {
-					en = this[m[1]];
+					elp = this[m[1]];
 				}
-				return document.createElement(en);
+				return document.createElement(elp);
 			}).bind({ /* define parent elements for some element types. */
 				'tr': 'tbody', 'tbody': 'table', 'thead': 'table', 'th': 'tr', 'td': 'tr',
 				'tfoot': 'table', 'caption': 'table', 'option': 'select', 'li': 'ul',
