@@ -23,17 +23,21 @@ var a = K345.dElement({
     child: {
         element: 'span',
         className: 'noo',
-        child: [{ // array because span has more than one child
-            element: 'img',
-            src: 'foo.png',
-            width: 458,
-            alt: 'fooooo me'
-        }, {
-            text: 'Hello!'
-        }, {
-            element: 'span',
-            text: 'Naaaa'
-        }]
+        child: [ // array because span has more than one child
+            {
+                element: 'img',
+                src: 'foo.png',
+                width: 458,
+                alt: 'fooooo me'
+            },
+            {
+                text: 'Hello!'
+            },
+            {
+                element: 'span',
+                text: 'Naaaa'
+            }
+        ]
     }
 });
 ```
