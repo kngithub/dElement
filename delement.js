@@ -156,9 +156,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* create shallow copy of object. fallback to simplified Object.create */
 	shCopy = (isMeth(Object, 'create') && (Object.create({a: 3})).a === 3)
-		? function (o) {
-			return Object.create(o);
-		}
+		? Object.create
 		: function (o) {
 			function F() {}
 			F.prototype = o;
@@ -460,9 +458,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var step = 1,
 			start = 0,
 			cnt = 1,
-			lcnt = 0,
+			parr = ['chk', 'sel'],
 			isdeep = hasOP(s, 'loopdeep'),
-			frg, i, o, lprop, loopobj;
+			frg, i, o, lprop, loopobj, lcnt;
 
 		if (hasOP(s, 'loop') && isdeep) {
 			dError('You may use only one of "loop" OR "loopdeep", not both.');
@@ -492,6 +490,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				if (!Array.isArray(loopobj.values)) {
 					dError('loop property "values" has to be an array');
 				}
+
 				if (
 					!hasOP(loopobj, 'valuesrepeat') &&
 					loopobj.values.length < loopobj.count
@@ -500,6 +499,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 						') than loop count (' + loopobj.count + ')');
 				}
 			}
+
+			/* validate chk/sel properties (checked or selected elements) */
+			parr.forEach(function (item) {
+				if (hasOP(loopobj, item)) {
+					if (!Array.isArray(loopobj[item]) && isNaN(loopobj[item])) {
+						dError('type of loop property "' + item + '" must be array or number');
+					}
+				}
+			});
 		}
 		else if (!isNaN(loopobj)) {
 			cnt = Number(loopobj);
@@ -509,16 +517,52 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		frg = document.createDocumentFragment();
 
 		/* element loop */
+		lcnt = 0;
 		for (i = start; i < (start + (step * cnt)); i += step) {
 			if (Math.floor(i) !== i) { /* float check */
 				i = parseFloat(i.toFixed(8), 10); /* avoid rounding errors */
 			}
+
+			/* replace placeholders with current values */
 			o = replaceCounter(s, i, lcnt, isdeep, loopobj);
+
+			/* set checked/selected if one of the properties from "parr" exists */
+			if (parr.some(hasOP.bind(null, loopobj))) {
+				o = setCSFlags(o, loopobj, lcnt, parr);
+			}
+
+			/* create element tree and append to fragment */
 			appendTree.call(frg, o);
 			lcnt++;
 		}
 		s[lprop] = loopobj;
 		return frg;
+	}
+
+	/**
+		set checked or selected property
+		@param o    {Object}    element declaration
+		@param lo   {Object}    loop configuration object
+		@param lc   {Integer}   loop counter
+		@param arr  {Array}     array of property names to process
+		@returns    {Object}    declaration with replaced values
+	*/
+	function setCSFlags(o, lo, lc, arr) {
+		var i = arr.length,
+			c = lc + 1,
+			item, prp;
+
+		while (i--) {
+			item = arr[i];
+			if (hasOP(lo, item) && (
+				c === lo[item] ||
+				(Array.isArray(lo[item]) && lo[item].indexOf(c) > -1)
+			)) {
+				prp = (item === 'chk') ? 'checked' : 'selected';
+				o[prp] = true;
+			}
+		}
+		return o;
 	}
 
 	/**

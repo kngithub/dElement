@@ -183,12 +183,12 @@ function dTest(txt, arr, what, catchex) {
 		arr.push(bb);
 	}
 
-//	// push dElement output
-//	if (!catchex) {
-//		tree = K345.dElement(what);
-//		arr.push(tree);
-//		return tree;
-//	}
+	// push dElement output
+	if (!catchex) {
+		tree = K345.dElement(what);
+		arr.push(tree);
+		return tree;
+	}
 
 	// catch an expected exception
 	try {
@@ -196,9 +196,6 @@ function dTest(txt, arr, what, catchex) {
 		arr.push(tree);
 	}
 	catch (ex) {
-		if (!catchex) {
-			throw ex;
-		}
 		var s = document.createElement('span');
 		s.className = 'err';
 		s.appendChild(document.createTextNode(ex.message));
@@ -595,7 +592,7 @@ try {
 		id: 'big'
 	}]);
 
-	dTest("select with options + event", nodes2, [{
+	dTest("select with options + event II - loop", nodes2, [{
 		element: 'br'
 	}, {
 		element: 'select',    // select with three options
@@ -608,7 +605,8 @@ try {
 			value: '!!v!! !!n+1!!',
 			loop: {
 				count: 3,
-				values: ['foo', 'bar', 'baz']
+				values: ['foo', 'bar', 'baz'],
+				sel: 2
 			},
 			child: 'Option !!n+1!!'
 		}
@@ -616,6 +614,15 @@ try {
 		element: 'span',
 		id: 'bigz'
 	}]);
+
+	dTest("loop create checkboxes with predefined status", nodes3, {
+		element: 'input @checkbox',
+		name: 'bh',
+		loop: {
+			count: 6,
+			chk: [1, 2, 5]
+		}
+	});
 
 	dTest("extended sytax + comment", nodes3, {
 		element: 'H3 .generated #about-1 .headlines',
@@ -690,15 +697,15 @@ try {
 			element: 'label',
 			child: {
 				element: 'input @radio ~ashow2',
-				value: 'all',
-				checked: true
+				value: 'all'
 			},
 			text: ' all '
 		}, {
 			element: 'label',
 			child: {
 				element: 'input @radio ~ashow2',
-				value: 'only_right'
+				value: 'only_right',
+				checked: true
 			},
 			text: ' right '
 		}, {

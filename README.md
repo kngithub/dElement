@@ -1,14 +1,21 @@
+<style>
+.pl-c {color: #3A2;}
+.pl-k {color: #77E;}
+</style>
 
-Sorry, no real docs yet :(
+
+Sorry, no real docs yet :disappointed:
 
 for now:
 * read the (mostly) [german doc](http://javascript.knrs.de/K345/delement/)
-<br>  (maybe with a little help of a translation service)
-* view delement-test.html for usage examples.  (**caution**! it's a test page, includes invalid test cases)
+  (maybe with a little help of a translation service)
+* view [test page](http://res.knrs.de/js/delement/delement_test.html) for usage examples.  (**caution**! it's a test page, includes invalid test cases)
 * read the comments in delement.js
 
 
 # dElement()
+:calendar: 2006-2018
+
 Create DOM node tree.
 
 the main advantage of dElement comes with more complicated / nested structures or loops
@@ -163,13 +170,13 @@ var sel = K345.dElement({
         element: 'option',
         loop: {
             count: 3,
-            values: ['foo', 'bar', 'baz']   // values for placeholder !!v!!
+            sel: 2,    // 2nd element (index 1) will be selected by default
+            values: ['foo', 'bar', 'baz']    // values for placeholder !!v!!
         },
         value: '!!v!! !!n+1!!',
         text: 'Option !!n+1!!'
     }
 });
-sel.options[1].selected = true;
 ```
 
 ## loop with repeating value range
@@ -194,6 +201,8 @@ var el = K345.dElement({
 - [X] test multiple properties
 - [X] test new "condition" keyword
 - [X] create elements in loops
+- [X] commit values and checked/selected
+- [ ] write a extended and robust test page
 - [ ] remove all bugs (yeah, sure)
 - [ ] write docs (dream on)
 
