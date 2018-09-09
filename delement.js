@@ -460,6 +460,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var step = 1,
 			start = 0,
 			cnt = 1,
+			parr = ['chk', 'sel'],
 			isdeep = hasOP(s, 'loopdeep'),
 			frg, i, o, lprop, loopobj, lcnt;
 
@@ -502,7 +503,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			}
 
 			/* validate chk/sel properties (checked or selected elements) */
-			['chk', 'sel'].forEach(function (item) {
+			parr.forEach(function (item) {
 				if (hasOP(loopobj, item)) {
 					if (!Array.isArray(loopobj[item]) && isNaN(loopobj[item])) {
 						dError('type of loop property "' + item + '" must be array or number');
@@ -528,8 +529,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			o = replaceCounter(s, i, lcnt, isdeep, loopobj);
 
 			/* set checked/selected */
-			if (hasOP(loopobj, 'chk') || hasOP(loopobj, 'sel')) {
-				o = setCSFlags(o, loopobj, lcnt);
+			if (parr.some(hasOP.bind(null, loopobj))) {
+				o = setCSFlags(o, loopobj, lcnt, parr);
 			}
 
 			/* create element tree and append to fragment */
@@ -541,9 +542,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/* set checked or selected property */
-	function setCSFlags(o, lo, lc) {
-		var arr = ['sel', 'chk'],
-			i = arr.length,
+	function setCSFlags(o, lo, lc, arr) {
+		var i = arr.length,
 			c = lc + 1,
 			item, prp;
 
