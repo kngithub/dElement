@@ -156,9 +156,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* create shallow copy of object. fallback to simplified Object.create */
 	shCopy = (isMeth(Object, 'create') && (Object.create({a: 3})).a === 3)
-		? function (o) {
-			return Object.create(o);
-		}
+		? Object.create
 		: function (o) {
 			function F() {}
 			F.prototype = o;
@@ -528,7 +526,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			/* replace placeholders with current values */
 			o = replaceCounter(s, i, lcnt, isdeep, loopobj);
 
-			/* set checked/selected */
+			/* set checked/selected if one of the properties from "parr" exists */
 			if (parr.some(hasOP.bind(null, loopobj))) {
 				o = setCSFlags(o, loopobj, lcnt, parr);
 			}
@@ -541,7 +539,14 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return frg;
 	}
 
-	/* set checked or selected property */
+	/**
+		set checked or selected property
+		@param o    {Object}    element declaration
+		@param lo   {Object}    loop configuration object
+		@param lc   {Integer}   loop counter
+		@param arr  {Array}     array of property names to process
+		@returns    {Object}    declaration with replaced values
+	*/
 	function setCSFlags(o, lo, lc, arr) {
 		var i = arr.length,
 			c = lc + 1,
