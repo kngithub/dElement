@@ -1,9 +1,3 @@
-<style>
-.pl-c {color: #3A2;}
-.pl-k {color: #77E;}
-</style>
-
-
 Sorry, no real docs yet :disappointed:
 
 for now:
@@ -14,7 +8,7 @@ for now:
 
 
 # dElement()
-:calendar: 2006-2018
+_2006-2018_
 
 Create DOM node tree.
 
