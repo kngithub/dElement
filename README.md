@@ -179,15 +179,22 @@ var el = K345.dElement({
     element: 'span',
     text: '!!v!! ',
     loop: {
-        count: 16,
+        count: 8,
         values: ['A', 'B', 'C'],
         valuesrepeat: true
-        // without valuesrepeat, count(16) would exceed array lenght(3)
+        // without valuesrepeat, count(8) would exceed array lenght(3)
     }
 });
 ```
 ```html
-<span>A B C A B C A B C A B C A B C A </span>
+<span>A </span>
+<span>B </span>
+<span>C </span>
+<span>A </span>
+<span>B </span>
+<span>C </span>
+<span>A </span>
+<span>B </span>
 ```
 
 ### todo list
