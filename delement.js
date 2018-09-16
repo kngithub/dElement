@@ -55,7 +55,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 */
 (function () {
 		/* internal vars */
-	var eventStack, refs, loopdepth, multiProps,
+	var eventStack, initStack, refs, loopdepth, multiProps,
 
 		/* predefined data */
 		skipProps, saveProps, formProps, boolProps,
@@ -450,6 +450,24 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			}
 		}
 	}
+
+	/** push function reference from init property and element reference to init stack */
+	function pushInit(el, val) {
+		if (typeof val === 'function') {
+			initStack.push({
+				el: el,
+				func: val
+			});
+		}
+	}
+
+	/** call all init functions in stack
+		'this' is a reference to the created element tree
+	*/
+	function callInit(fobj) {
+		fobj.func.call(fobj.el, this);
+	}
+
 
 	/* ==============  LOOPS  ================= */
 
@@ -1369,6 +1387,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				setPropIf(newEl, sp);
 				break;
 
+			/* init functions */
+			case 'init':
+				pushInit(newEl, sp);
+				break;
+
 			/* anything else */
 			default:
 				setProp(newEl, prop, sp);
@@ -1395,10 +1418,12 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			dError('Parameter has been omitted or is not an object/array');
 		}
 		eventStack = [];
+		initStack = [];
 		refs = null;
 		dtree = createTree(decl);
 		if (dtree) {
 			eventStack.forEach(setEvent);
+			initStack.forEach(callInit, dtree);
 		}
 		return dtree || null;
 	};
