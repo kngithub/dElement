@@ -12,7 +12,7 @@
 		width: 87%;
 		margin: 1.9em auto;
 		padding: 0.5em 3em 2em 1em;
-		background: #FFFFF4;
+		background-color: #FFFFF4;
 		outline: 1px solid yellow;
 	}
 
@@ -107,15 +107,23 @@
 		color: green;
 	}
 
+	.bhcb {
+		margin: 0 0.2em;
+		padding: 0.1em 0.3em;
+		color: blue;
+		background-color: yellow;
+		font-weight: 900;
+		border: 1px solid gray;
+	}
+
+	.bhcb.chk {
+		background-color: #9D9;
+	}
+
 </style>
-<script type="text/javascript" src="../setup.js"></script>
-<script type="text/javascript" src="../array16.js"></script>
-<script type="text/javascript" src="../function.js"></script>
-<script type="text/javascript" src="../setup2.js"></script>
-<script type="text/javascript" src="../object.js"></script>
-<script type="text/javascript" src="../event.js"></script>
-<script type="text/javascript" src="../dom.js"></script>
-<script type="text/javascript" src="../basics.js"></script>
+<script type="text/javascript" src="../misc/array16-i-min.js"></script>
+<script type="text/javascript" src="../misc/bind-i-min.js"></script>
+<script type="text/javascript" src="../misc/event-i-min.js"></script>
 <script type="text/javascript" src="delement.js"></script>
 </head>
 <body>
@@ -144,13 +152,15 @@
 
 <pre id="inner">innerHTML</pre>
 
+<p id="some_element">empty</p>
+
 <h2>Code</h2>
 <pre id="scode">source:</pre>
 
 <script type="text/javascript">
-/*global K345*/
+/*global K345, addEvent, targetElement */
 /*eslint-disable no-implicit-globals, no-alert */
-var nodes = [],
+var nodes1 = [],
 	nodes2 = [],
 	nodes3 = [],
 	myrefs = {},
@@ -159,6 +169,8 @@ var nodes = [],
 	b, bz, dTest, g1, g2, r, reffi, xxx;
 
 /*
+	dTest(obj)
+
 	obj.txt		{string}
 		descriptive text for current test case. [optional]
 	obj.arr		{array}
@@ -179,53 +191,64 @@ dTest = (function () {
 		return tree;
 	}
 
-	return function (obj) {
-		var tree = null,
-			txt, arr, what;
+	return {
+		add: function (obj) {
+			var tree = null,
+				txt, arr, what;
 
-		if (!obj || typeof obj !== 'object' || !('arr' in obj) || !('decl' in obj)) {
-			throw new TypeError('dTest: parameter has to be an object with properties "arr" and "decl"');
-		}
+			if (!obj || typeof obj !== 'object' || !('arr' in obj) || !('decl' in obj)) {
+				throw new TypeError('dTest: parameter has to be an object with properties "arr" and "decl"');
+			}
 
-		txt = obj.txt;
-		arr = obj.arr;
-		what = obj.decl;
+			txt = obj.txt;
+			arr = obj.arr;
+			what = obj.decl;
 
-		if (!Array.isArray(arr)) {
-			throw new TypeError('dTest: property "arr" has to be an array');
-		}
+			if (!Array.isArray(arr)) {
+				throw new TypeError('dTest: property "arr" has to be an array');
+			}
 
-		if (what === null || (!Array.isArray(what) && typeof what !== 'object')) {
-			throw new TypeError('dTest: property "decl" has to be an declaration object or' +
-				' an array of declaration objects');
-		}
+			if (what === null || (!Array.isArray(what) && typeof what !== 'object')) {
+				throw new TypeError('dTest: property "decl" has to be an declaration object or' +
+					' an array of declaration objects');
+			}
 
-		// description
-		if (typeof txt === 'string' && txt.length) {
-			arr.push(K345.dElement({
-				element: 'b',
-				className: 'desc',
-				text: txt + ': '
-			}));
-		}
+			// description
+			if (typeof txt === 'string' && txt.length) {
+				arr.push(K345.dElement({
+					element: 'b',
+					className: 'desc',
+					text: txt + ': '
+				}));
+			}
 
-		// push dElement output
-		if (!obj.catchex) {
-			return crTree(what, arr, txt);
-		}
+			// push dElement output
+			if (!obj.catchex) {
+				return crTree(what, arr, txt);
+			}
 
-		// catch an expected exception
-		try {
-			tree = crTree(what, arr, txt);
+			// catch an expected exception
+			try {
+				tree = crTree(what, arr, txt);
+			}
+			catch (ex) {
+				arr.push(K345.dElement({
+					element: 'span',
+					className: 'err',
+					text: ex.message
+				}));
+			}
+			return tree;
+		},
+
+		append: function (el, br, nodes) {
+			if (nodes) {
+				el.appendChild(nodes);
+				if (br) {
+					el.appendChild(document.createElement('br'));
+				}
+			}
 		}
-		catch (ex) {
-			arr.push(K345.dElement({
-				element: 'span',
-				className: 'err',
-				text: ex.message
-			}));
-		}
-		return tree;
 	};
 })();
 
@@ -237,8 +260,8 @@ function fakeEventFunc(fn, ty, el) {
 <script id="mycode" type="text/javascript">
 /*eslint-disable no-implicit-globals, no-alert */
 try {
-	dTest({
-		arr: nodes,
+	dTest.add({
+		arr: nodes1,
 		decl: [{
 			elrefs: myrefs,
 			element: 'li',
@@ -313,7 +336,7 @@ try {
 		}]
 	});
 
-	dTest({
+	dTest.add({
 		txt: "button with event",
 		arr: nodes2,
 		decl: {
@@ -343,7 +366,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "extended element syntax",
 		arr: nodes2,
 		decl: [{
@@ -351,7 +374,7 @@ try {
 			text: 'created w extended syntax',
 			id: 'foo22', // should be overruled by extsyn
 			onclick: function () {
-			alert('value: ' + this.value + '\nid: ' + this.id);
+				alert('value: ' + this.value + '\nid: ' + this.id);
 			}
 		}, {
 			text: ' button text should be green and underlined; id must be extsyn'
@@ -360,7 +383,7 @@ try {
 		}]
 	});
 
-	dTest({
+	dTest.add({
 		txt: "html string with event",
 		arr: nodes2,
 		decl: {
@@ -374,7 +397,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "set and read data",
 		arr: nodes2,
 		decl: {
@@ -401,7 +424,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "html & text",
 		arr: nodes2,
 		decl: {
@@ -412,7 +435,7 @@ try {
 
 	reffi = {};
 
-	dTest({
+	dTest.add({
 		txt: "collect & elrefs",
 		arr: nodes2,
 		decl: {
@@ -455,7 +478,7 @@ try {
 	});
 
 	// this section contains some implicit toString() calls
-	dTest({
+	dTest.add({
 		txt: "legal/illegal stuff + implicit toString() calls",
 		arr: nodes2,
 		decl: [
@@ -496,7 +519,7 @@ try {
 		]
 	});
 
-	dTest({
+	dTest.add({
 		txt: "extended syntax w/o element node name",
 		arr: nodes2,
 		catchex: true,
@@ -505,19 +528,19 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "html string array + multiple events",
 		arr: nodes2,
 		decl: [{
 			element: 'span',
 			html: ['<u>underlined</u> ', '<strong>strong</strong> ', '<em>emphased</em>'],
 			event: [{
-				func: K345.events.add,
+				func: addEvent,
 				args: ['click', function () {
 					alert('Click 1/2');
 				}]
 			}, {
-				func: K345.events.add,
+				func: addEvent,
 				args: ['click', function () {
 					alert('Click 2/2');
 				}]
@@ -543,7 +566,7 @@ try {
 
 	xxx = K345.dElement({element: 'span', text: 'yooo'});
 
-	dTest({
+	dTest.add({
 		txt: "clone",
 		arr: nodes2,
 		decl: [
@@ -552,7 +575,7 @@ try {
 		]
 	});
 
-	dTest({
+	dTest.add({
 		txt: "try to append child to empty element",
 		arr: nodes2,
 		catchex: true,
@@ -562,7 +585,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "try to use illegal data name",
 		arr: nodes2,
 		catchex: true,
@@ -572,7 +595,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop !!n!!, start 1.2 step 0.25",
 		arr: nodes2,
 		decl: {
@@ -586,7 +609,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop [!!n!!]=>!!1.5n+1!!",
 		arr: nodes2,
 		decl: {
@@ -599,7 +622,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop 20x start 2 step 2",
 		arr: nodes2,
 		decl: {
@@ -614,7 +637,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop with values array ['an apple', 'a pear', 'a banana']",
 		arr: nodes2,
 		decl: {
@@ -627,7 +650,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop 16x with values array ['A', 'B', 'C']; no repeat mode",
 		arr: nodes2,
 		catchex: true,
@@ -641,7 +664,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop 16x with values array ['A', 'B', 'C']; repeat mode",
 		arr: nodes2,
 		decl: {
@@ -655,7 +678,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop 10x <li>!!n!!<span>!!n+1!!<span>!!2n+1!!</span></span></li>",
 		arr: nodes2,
 		decl: {
@@ -679,7 +702,7 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "select with options + event",
 		arr: nodes2,
 		decl: [{
@@ -710,7 +733,7 @@ try {
 		}]
 	});
 
-	dTest({
+	dTest.add({
 		txt: "select with options + event II - loop",
 		arr: nodes2,
 		decl: [{
@@ -737,20 +760,34 @@ try {
 		}]
 	});
 
-	dTest({
+	dTest.add({
 		txt: "loop create checkboxes with predefined status",
 		arr: nodes3,
-		decl: {
-			element: 'input @checkbox',
-			name: 'bh',
+		decl: [{
+			element: 'input @checkbox ~bh',
+			value: 'bh-!!n!!',
+			onclick: function (evt) {
+				var el = targetElement(evt),
+					s = document.getElementById(el.value);
+
+				if (el.checked) {
+					s.className += ' chk'
+				} else {
+					s.className = s.className.replace(/\schk(\s|$)/i, '');
+				}
+			},
 			loop: {
 				count: 6,
 				chk: [1, 2, 5]
 			}
-		}
+		}, {
+			element: 'span .bhcb #bh-!!n!!',
+			child: '!!n+1!!',
+			loop: 6
+		}]
 	});
 
-	dTest({
+	dTest.add({
 		txt: "extended sytax + comment",
 		arr: nodes3,
 		decl: {
@@ -761,15 +798,15 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "regular dElement",
 		arr: nodes3,
 		decl: {
 			element: 'div',
 			event: {
-				func: K345.events.add,
-				args: ['click', function (e) {
-					var el = K345.events.getTarget(e);
+				func: addEvent,
+				args: ['click', function (evt) {
+					var el = targetElement(evt);
 					if (el && el.nodeName.toLowerCase() === 'input') {
 						g1.innerHTML = el.value;
 					}
@@ -783,9 +820,8 @@ try {
 				child: {
 					element: 'input',
 					type: 'radio',
-					name: 'ashow',
-					value: 'all',
-					checked: true
+					name: 'ashow1',
+					value: 'all'
 				},
 				text: ' all '
 			}, {
@@ -793,7 +829,7 @@ try {
 				child: {
 					element: 'input',
 					type: 'radio',
-					name: 'ashow',
+					name: 'ashow1',
 					value: 'only_right'
 				},
 				text: ' right '
@@ -802,7 +838,8 @@ try {
 				child: {
 					element: 'input',
 					type: 'radio',
-					name: 'ashow',
+					name: 'ashow1',
+					checked: true,
 					value: 'only_wrong'
 				},
 				text: ' wrong ',
@@ -813,15 +850,15 @@ try {
 		}
 	});
 
-	dTest({
+	dTest.add({
 		txt: "extended Syntax",
 		arr: nodes3,
 		decl: {
 			element: 'div',
 			event: {
-				func: K345.events.add,
-				args: ['click', function (e) {
-					var el = K345.events.getTarget(e);
+				func: addEvent,
+				args: ['click', function (evt) {
+					var el = targetElement(evt);
 					if (el && el.nodeName.toLowerCase() === 'input') {
 						g2.innerHTML = el.value;
 					}
@@ -858,6 +895,29 @@ try {
 			}]
 		}
 	});
+
+	dTest.add({
+		txt: 'init',
+		arr: nodes3,
+		decl: {
+			element: 'p#foooooooo',
+			init: function (ax, bx) {
+				console.dir(ax)
+				console.dir(bx)
+				var b = this,
+					c = 0,
+					tc = ['bar', 'foo'],
+					m;
+
+				setInterval(function () {
+					b.textContent = tc[c];
+					c = (Number(!c));
+				}, 3000);
+			},
+			text: 'foo'
+		}
+
+	});
 // catch generic errors
 } catch (ex) {
 	alert(ex.message);
@@ -866,6 +926,9 @@ try {
 
 <script type="text/javascript">
 /*eslint-disable no-implicit-globals, no-alert */
+
+var getChecked;
+
 function repl1 (s) {
 	s = s.replace(/</g, '&lt;');
 	if (K345.ieVer !== undefined && K345.ieVer < 9) {
@@ -886,16 +949,23 @@ function repl2 (s) {
 	return repl1(s);
 }
 
-function append(m) {
-	if (m) {
-		this[0].appendChild(m);
-		if (this[1]) { this[0].appendChild(document.createElement('br')); }
+function getElementsByProp (prop, name) {
+	var i, len,
+		arr = [],
+		ecoll = document.getElementsByName(name);
+
+	if (ecoll) {
+		len = ecoll.length;
+		for (i = 0; i < len; i++) {
+			if (ecoll[i][prop]) {
+				arr.push(ecoll[i]);
+			}
+		}
 	}
+	return arr;
 }
 
-function hasOP(o, p) {
-	return Object.prototype.hasOwnProperty.call(o, p);
-}
+getChecked = getElementsByProp.bind(null, 'checked');
 
 window.onload = function () {
 	var u = document.getElementById('list'),
@@ -903,22 +973,24 @@ window.onload = function () {
 		cx = document.getElementById('cce'),
 		cx2 = document.getElementById('cce-2'),
 		idc = [], idc2 = [],
-		i;
+		hop = Object.prototype.hasOwnProperty,
+		i, len, cba, el;
 
 	r = document.getElementById('radi');
 	g1 = document.getElementById('radioout1');
 	g2 = document.getElementById('radioout2');
 
-	nodes.forEach(append.bind([u, 0]));
-	nodes2.forEach(append.bind([d, 1]));
-	nodes3.forEach(append.bind([r, 1]));
+	nodes1.forEach(dTest.append.bind(null, u, false));
+	nodes2.forEach(dTest.append.bind(null, d, true));
+	nodes3.forEach(dTest.append.bind(null, r, true));
 
-	for (i = 0; i < mma.length; i++) {
+	len = mma.length;
+	for (i = 0; i < len; i++) {
 		idc[i] = mma[i].id;
 	}
 	cx.innerHTML += 'collect arr: ' + idc.join(', ');
 	for (i in mmo) {
-		if (hasOP(mmo, i)) {
+		if (hop.call(mmo, i)) {
 			idc2.push(mmo[i].id);
 		}
 	}
@@ -929,6 +1001,15 @@ window.onload = function () {
 	bz = document.getElementById('bigz');
 	bz.innerHTML = document.getElementById('sel2').value;
 
+	g1.innerHTML = getChecked('ashow1')[0].value;
+	g2.innerHTML = getChecked('ashow2')[0].value;
+
+	cba = getChecked('bh');
+	len = cba.length;
+	while (len--) {
+		document.getElementById(cba[len].value).className += ' chk';
+	}
+
 	document.getElementById('inner').innerHTML = repl1(
 		document.getElementById('dynamisch').innerHTML
 	);
@@ -936,6 +1017,7 @@ window.onload = function () {
 		document.getElementById('mycode').innerHTML
 	);
 };
+
 </script>
 </body>
 </html>
