@@ -203,6 +203,7 @@ var el = K345.dElement({
 - [X] test new "condition" keyword
 - [X] create elements in loops
 - [X] commit values and checked/selected
+- [ ] update and change incomplete, bad and faulty comments in source
 - [ ] write a extended and robust test page
 - [ ] remove all bugs (yeah, sure)
 - [ ] write docs (dream on)

@@ -771,7 +771,7 @@ try {
 					s = document.getElementById(el.value);
 
 				if (el.checked) {
-					s.className += ' chk'
+					s.className += ' chk';
 				} else {
 					s.className = s.className.replace(/\schk(\s|$)/i, '');
 				}
@@ -904,8 +904,7 @@ try {
 			init: function () {
 				var b = this,
 					c = 0,
-					tc = ['bar', 'foo'],
-					m;
+					tc = ['bar', 'foo'];
 
 				setInterval(function () {
 					b.textContent = tc[c];
@@ -972,7 +971,7 @@ window.onload = function () {
 		cx2 = document.getElementById('cce-2'),
 		idc = [], idc2 = [],
 		hop = Object.prototype.hasOwnProperty,
-		i, len, cba, el;
+		i, len, cba;
 
 	r = document.getElementById('radi');
 	g1 = document.getElementById('radioout1');
