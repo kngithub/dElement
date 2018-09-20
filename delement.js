@@ -10,8 +10,6 @@
 /** @namespace */
 var K345 = K345 || {};
 
-'use strict';
-
 if ('requireScript' in K345) {
 	K345.requireScript('array16', 'function');
 }
@@ -47,18 +45,22 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 /**
 	dElement / dAppend
 	requires Array.isArray()
-	requires Array.prototype.indexOf()
 	requires Array.prototype.filter()
 	requires Array.prototype.forEach()
+	requires Array.prototype.indexOf()
+	requires Array.prototype.some()
+	requires Function.prototype.bind()
 	requires K345.attrNames
 	requires K345.voidElements
 */
 (function () {
+	''; 'use strict';
+
 		/* internal vars */
-	var eventStack, initStack, refs, loopdepth, multiProps,
+	var eventStack, initStack, refs, loopdepth,
 
 		/* predefined data */
-		skipProps, saveProps, formProps, boolProps,
+		skipProps, saveProps, formProps, boolProps, multiProps,
 
 		/* functions */
 		createElem, dError, isNode, isEl, isAppendable, isTextNode, shCopy, hasOP,
@@ -66,10 +68,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	if (
 		!isMeth(Array, 'isArray') ||
-		!isMeth(Function.prototype, 'bind') ||
-		!isMeth(Array.prototype, 'indexOf') ||
 		!isMeth(Array.prototype, 'filter') ||
 		!isMeth(Array.prototype, 'forEach') ||
+		!isMeth(Array.prototype, 'indexOf') ||
+		!isMeth(Array.prototype, 'some') ||
+		!isMeth(Function.prototype, 'bind') ||
 		!isMeth(document, 'createDocumentFragment') ||
 		!isObj(K345.attrNames) ||
 		!Array.isArray(K345.voidElements)
@@ -207,10 +210,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/** save element reference if one of these props appears
 		@type Array */
 	saveProps = ['id', 'name'];
-
-	/** collect events
-		@type Array */
-	eventStack = null;
 
 	/** recursion counter for variable replacement depth in loop
 		@type Number */
@@ -799,7 +798,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			dError('parser: ' + str);
 		}
 
-		/* remove duplicate elements in array */
+		/* callback for [].filter: remove duplicate elements in array */
 		function removeDupes(cn, ix, arr) {
 			return ix === arr.indexOf(cn);
 		}
@@ -1273,8 +1272,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		/* init or unset reference declaration data */
 		if (s.elrefs === null) {
-			/** collect element references
-				@type Object */
 			refs = null;
 		}
 		else if (isObj(s.elrefs)) {
@@ -1407,9 +1404,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/* ==============  dElement() & dAppend()  ================= */
 
 	/** create node tree from declaration
-		@param   {object} decl
+		@param   {Object} decl
 			element declaration
-		@returns {nodes|null}
+		@returns {Nodes|null}
 			node tree or fragment or null
 	*/
 	K345.dElement = function (decl) {
@@ -1417,9 +1414,18 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		if (!Array.isArray(decl) && !isObj(decl)) {
 			dError('Parameter has been omitted or is not an object/array');
 		}
+		/** collect events
+			@type Array */
 		eventStack = [];
+
+		/** collect init functions
+			@type Array */
 		initStack = [];
+
+		/** collect element references
+			@type Object */
 		refs = null;
+
 		dtree = createTree(decl);
 		if (dtree) {
 			eventStack.forEach(setEvent);
