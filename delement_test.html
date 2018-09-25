@@ -750,7 +750,7 @@ try {
 				loop: {
 					count: 3,
 					values: ['foo', 'bar', 'baz'],
-					sel: 2
+					sel: 3
 				},
 				child: 'Option !!n+1!!'
 			}
@@ -898,7 +898,7 @@ try {
 
 	dTest.add({
 		txt: 'init',
-		arr: nodes3,
+		arr: nodes2,
 		decl: {
 			element: 'p#foooooooo',
 			init: function () {
@@ -915,8 +915,20 @@ try {
 		}
 
 	});
-// catch generic errors
-} catch (ex) {
+
+	dTest.add({
+		txt: "text fun",
+		arr: nodes2,
+		decl: [
+			'foo',
+			3,
+			'bar',
+			{text: 'baz'},
+			'qux'
+		]
+	});
+
+} catch (ex) { // catch all generic errors
 	alert(ex.message);
 }
 </script>
@@ -947,11 +959,10 @@ function repl2 (s) {
 }
 
 function getElementsByProp (prop, name) {
-	var i, len,
-		arr = [],
+	var i, len, arr = [],
 		ecoll = document.getElementsByName(name);
 
-	if (ecoll) {
+	if (ecoll && ecoll.length) {
 		len = ecoll.length;
 		for (i = 0; i < len; i++) {
 			if (ecoll[i][prop]) {
