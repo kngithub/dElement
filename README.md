@@ -1,7 +1,7 @@
 Sorry, no real docs yet :disappointed:
 
 for now:
-* read the (mostly) [german doc](http://javascript.knrs.de/K345/delement/?lang=en)
+* read the (mostly) [german doc](http://javascript.knrs.de/delement/?lang=en)
   (maybe with a little help of a translation service). Code examples are in english.
 * view [test page](http://res.knrs.de/js/delement/delement_test.html) for usage examples.  (**caution**! it's a test page, includes invalid test cases)
 * read the comments in delement.js
