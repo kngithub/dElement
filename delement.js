@@ -63,8 +63,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		skipProps, saveProps, formProps, boolProps, multiProps,
 
 		/* functions */
-		createElem, dError, isNode, isEl, isAppendable, isTextNode, shCopy, hasOP,
-		parseElemStr, strToNodes;
+		dError, isNode, isEl, isAppendable, isTextNode, hasOP, parseElemStr, strToNodes;
 
 	if (
 		!isMeth(Array, 'isArray') ||
@@ -157,14 +156,26 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return ('function|unknown'.indexOf(t) > -1) || (t === 'object' && !!o[m]);
 	}
 
-	/* create shallow copy of object. fallback to simplified Object.create */
-	shCopy = (isMeth(Object, 'create') && (Object.create({a: 3})).a === 3)
-		? Object.create
-		: function (o) {
-			function F() {}
-			F.prototype = o;
-			return new F();
-		};
+	/* create copy of object.
+		Simplified, because it will only be used for dElement declaration objects */
+	function ocp (o) {
+		var no = {}, p, op;
+		for (p in o) {
+			if (hasOP(o, p)) {
+				op = o[p];
+				if (Array.isArray(op)) {
+					no[p] = Array.prototype.slice.call(op, 0);
+				}
+				else if (isObj(op)) {
+					no[p] = ocp(op);
+				}
+				else {
+					no[p] = op;
+				}
+			}
+		}
+		return no;
+	}
 
 	/** throw error
 		@function */
@@ -533,6 +544,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		frg = document.createDocumentFragment();
 
+
 		/* element loop */
 		lcnt = 0;
 		for (i = start; i < (start + (step * cnt)); i += step) {
@@ -557,32 +569,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/**
-		set checked or selected property
-		@param o    {Object}    element declaration
-		@param lo   {Object}    loop configuration object
-		@param lc   {Integer}   loop counter
-		@param arr  {Array}     array of property names to process
-		@returns    {Object}    declaration with replaced values
-	*/
-	function setCSFlags(o, lo, lc, arr) {
-		var i = arr.length,
-			c = lc + 1,
-			item, prp;
-
-		while (i--) {
-			item = arr[i];
-			if (hasOP(lo, item) && (
-				c === lo[item] ||
-				(Array.isArray(lo[item]) && lo[item].indexOf(c) > -1)
-			)) {
-				prp = (item === 'chk') ? 'checked' : 'selected';
-				o[prp] = true;
-			}
-		}
-		return o;
-	}
-
-	/**
 		find placeholders and replace them with committed values
 
 		@param decl   {Object}    element declaration
@@ -595,8 +581,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	function replaceCounter(decl, i, c, isdeep, lobj) {
 		var o, phreg, phreg_det, p, mch, ph, op, cc, v;
 
-		/* create shallow copy of declaration */
-		o = shCopy(decl);
+		/* create copy of declaration */
+		o = ocp(decl);
 
 		/* raw RegExp to detect all !!..n..!! and !!..c..!! placeholders */
 		phreg = /\!\![^v!\s]+\!\!/gi;
@@ -674,6 +660,32 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			i += add;
 		}
 		return s.replace(mch[0], i);
+	}
+
+	/**
+		set checked or selected property
+		@param o    {Object}    original element declaration
+		@param lo   {Object}    loop configuration object
+		@param lc   {Integer}   loop counter
+		@param arr  {Array}     array of property names to process
+		@returns    {Object}    declaration with replaced values
+	*/
+	function setCSFlags(o, lo, lc, arr) {
+		var i = arr.length,
+			c = lc + 1,
+			item, prp;
+
+		while (i--) {
+			item = arr[i];
+			if (hasOP(lo, item) && (
+				c === lo[item] ||
+				(Array.isArray(lo[item]) && lo[item].indexOf(c) > -1)
+			)) {
+				prp = (item === 'sel') ? 'selected' : 'checked';
+				o[prp] = true;
+			}
+		}
+		return o;
 	}
 
 	/* ==============  ELEMENT REFERENCES  ================= */
@@ -1151,35 +1163,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		/* eslint-enable guard-for-in, default-case */
 	}
 
-	/** create element (with some bugfixes:
-		Bug in IE8 and Opera <= 12: If 'type' is not assigned as first property on
-		'input' (and maybe other elements) the 'value' property might be lost)
-
-		@param {Object}  s    element declaration
-		@returns {Node}       new node element
-		@function
-		@private
-	*/
-	createElem = (function () {
-		/* */
-		function setProp_callback(pr) {
-			if (hasOP(this.decl, pr)) {
-				setProp(this.el, pr, this.decl[pr]);
-			}
-		}
-
-		/* */
-		return function (s) {
-			var el = document.createElement(s.element);
-
-			/* set 'type', 'name, 'value', 'selected' and 'checked' before looping all
-				properties in createTree() to avoid some strange browser bugs */
-			formProps.forEach(setProp_callback, {el: el, decl: s});
-
-			return el;
-		};
-	})();
-
 	/** if a declaration "s" doesn't contain a property "element", then there has to be
 		a property "html", "text" or "comment".
 
@@ -1242,8 +1225,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			return s;
 		}
 
-		/* s is text string */
-		if (isStr(s)) {
+		/* s is text string or numeric */
+		if (isStr(s) || !isNaN(s)) {
 			return textNode(s);
 		}
 
@@ -1304,11 +1287,20 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			testVoidAppend(s);
 		}
 
-		/* create element */
-		newEl = createElem(s);
-		if (!newEl) {
-			dError('can\'t create element "' + s.element + '".');
-		}
+		/** create Element and set certain properties before main loop to avoid some
+			browser bugs.
+
+			Bug in IE8 and Opera <= 12: If "type" is not assigned as
+			first property on "input" (and maybe other) elements, the "value" property
+			might be lost.
+		*/
+		newEl = document.createElement(s.element);
+		formProps.forEach(function (pr) {
+			if (hasOP(s, pr)) {
+				setProp(newEl, pr, s[pr]);
+				delete s[pr];
+			}
+		});
 
 		/* loop all properties */
 		/* eslint-disable guard-for-in */
@@ -1325,9 +1317,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				});
 			}
 
-			/*  skip props 'element', 'elrefs', 'clone', 'clonetop' plus all properties
-				already processed in createElem() */
-			if (skipProps.indexOf(lcProp) > -1 || formProps.indexOf(lcProp) > -1) {
+			/*  skip props 'element', 'elrefs', 'clone', 'clonetop' */
+			if (skipProps.indexOf(lcProp) > -1) {
 				continue;
 			}
 
@@ -1389,7 +1380,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				pushInit(newEl, sp);
 				break;
 
-			/* anything else */
+			/* anything else will be treated as property/attribute of newEl */
 			default:
 				setProp(newEl, prop, sp);
 				break;
