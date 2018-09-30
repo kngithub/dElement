@@ -596,11 +596,11 @@ try {
 	});
 
 	dTest.add({
-		txt: "loop !!n!!, start 1.2 step 0.25",
+		txt: "loop [!!c!!]=>!!n!!, start 1.2 step 0.25",
 		arr: nodes2,
 		decl: {
 			element: 'span',
-			text: ' !!n!! ',
+			text: '[!!c!!]=>!!n!! ',
 			loop: {
 				count: -5,
 				start: 1.2,
