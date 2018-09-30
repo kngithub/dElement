@@ -488,57 +488,54 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			cnt = 1,
 			parr = ['chk', 'sel'],
 			isdeep = hasOP(s, 'loopdeep'),
-			frg, i, o, lprop, loopobj, lcnt;
+			frg, i, o, lprop, lobj, lcnt;
 
 		if (hasOP(s, 'loop') && isdeep) {
 			dError('You may use only one of "loop" OR "loopdeep", not both.');
 			return null;
 		}
 		lprop = (isdeep) ? 'loopdeep' : 'loop';
-		loopobj = s[lprop];
+		lobj = s[lprop];
 		delete s[lprop];
 
-		/* check if loopobj is either a valid object or a numeric value */
-		if (isObj(loopobj) && hasOP(loopobj, 'count') && !isNaN(loopobj.count)) {
+		/* check if lobj is either a valid object or a numeric value */
+		if (isObj(lobj) && hasOP(lobj, 'count') && !isNaN(lobj.count)) {
 
 			/* validate loop values count, step and start */
-			cnt = Number(loopobj.count);
-			if (hasOP(loopobj, 'step') && !isNaN(loopobj.step)) {
-				step = Number(loopobj.step);
+			cnt = Number(lobj.count);
+			if (hasOP(lobj, 'step') && !isNaN(lobj.step)) {
+				step = Number(lobj.step);
 				if (step === 0) {
 					step = 1;
 				}
 			}
-			if (hasOP(loopobj, 'start') && !isNaN(loopobj.start)) {
-				start = Number(loopobj.start);
+			if (hasOP(lobj, 'start') && !isNaN(lobj.start)) {
+				start = Number(lobj.start);
 			}
 
 			/* validate values array (for placeholder !!v!!) */
-			if (hasOP(loopobj, 'values')) {
-				if (!Array.isArray(loopobj.values)) {
+			if (hasOP(lobj, 'values')) {
+				if (!Array.isArray(lobj.values)) {
 					dError('loop property "values" has to be an array');
 				}
 
-				if (
-					!hasOP(loopobj, 'valuesrepeat') &&
-					loopobj.values.length < loopobj.count
-				) {
-					dError('"values" array has less elements (' + loopobj.values.length +
-						') than loop count (' + loopobj.count + ')');
+				if (!hasOP(lobj, 'valuesrepeat') && lobj.values.length < lobj.count) {
+					dError('"values" array has less elements (' + lobj.values.length +
+						') than loop count (' + lobj.count + ')');
 				}
 			}
 
 			/* validate chk/sel properties (checked or selected elements) */
 			parr.forEach(function (item) {
-				if (hasOP(loopobj, item)) {
-					if (!Array.isArray(loopobj[item]) && isNaN(loopobj[item])) {
+				if (hasOP(lobj, item)) {
+					if (!Array.isArray(lobj[item]) && isNaN(lobj[item])) {
 						dError('type of loop property "' + item + '" must be array or number');
 					}
 				}
 			});
 		}
-		else if (!isNaN(loopobj)) {
-			cnt = Number(loopobj);
+		else if (!isNaN(lobj)) {
+			cnt = Number(lobj);
 		}
 		cnt = Math.abs(Math.round(cnt)); /* make count a positive integer */
 
@@ -553,25 +550,25 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			}
 
 			/* replace placeholders with current values */
-			o = replaceCounter(s, i, lcnt, isdeep, loopobj);
+			o = replaceCounter(s, i, lcnt, isdeep, lobj);
 
 			/* set checked/selected if one of the properties from "parr" exists */
-			if (parr.some(hasOP.bind(null, loopobj))) {
-				o = setCSFlags(o, loopobj, lcnt, parr);
+			if (parr.some(hasOP.bind(null, lobj))) {
+				o = setCSFlags(o, lobj, lcnt, parr);
 			}
 
 			/* create element tree and append to fragment */
 			appendTree.call(frg, o);
 			lcnt++;
 		}
-		s[lprop] = loopobj;
+		//s[lprop] = lobj;
 		return frg;
 	}
 
 	/**
 		find placeholders and replace them with committed values
 
-		@param decl   {Object}    element declaration
+		@param decl   {Object}    dElement declaration object
 		@param i      {Number}    calculated value
 		@param c      {Integer}   loop counter
 		@param isdeep {Boolean}   recursive replace in subdeclarations
@@ -579,18 +576,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		@returns      {Object}    declaration with replaced values
 	*/
 	function replaceCounter(decl, i, c, isdeep, lobj) {
-		var o, phreg, phreg_det, p, mch, ph, op, cc, v;
+		var o, phreg, p, op, cc, v;
 
 		/* create copy of declaration */
 		o = ocp(decl);
 
-		/* raw RegExp to detect all !!..n..!! and !!..c..!! placeholders */
-		phreg = /\!\![^v!\s]+\!\!/gi;
-
-		/* detailed RegExp to get all parts of !!..n..!! and !!..c..!! placeholders */
-		phreg_det = /\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/i;
-					/*   !! |     number      | mul   | nc | add/sub  number |  !! */
-					/*      |      [1]        |       | [2]|       [3]       |     */
+		/* RegExp to get all parts of !!..n..!! and !!..c..!! placeholders */
+		phreg = /\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
+				/*  !!  |     number     |  mul   | nc | add/sub number  |  !! */
+				/*      |      [1]       |        | [2]|       [3]       |     */
 
 		/* handle array index if "values" propery is an array */
 		if (hasOP(lobj, 'values')) {
@@ -611,21 +605,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 					op = op.replace(/\!\!v\!\!/gi, v[cc]);
 				}
 
-				/* replace each placeholder in string */
-				while ((ph = phreg.exec(o[p])) !== null) { /* o[p], not op */
-
-					/* match counter, optional multiplicator and value to add */
-					mch = ph[0].match(phreg_det);
-
-					/* replace placeholder and do math */
-					if (Array.isArray(mch) && mch.length > 3) {
-						op = loopReplace(
-							op,
-							(mch[2] === 'c' ? c : i),
-							mch
-						);
-					}
-				}
+				/* calculate value of placeholder and replace it */
+				op = op.replace(phreg, loopReplace.bind(null, c, i));
 
 				/* write replaced string back to object property */
 				o[p] = op;
@@ -648,38 +629,41 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return o;
 	}
 
-	/* calculate value of placeholder and replace it */
-	function loopReplace(s, i, mch) {
-		var mul = Number(mch[1]),
-			add = Number(mch[3]);
+	/* callback for op.replace() in function replaceCounter:
+		calculate value of placeholder and replace it */
+	function loopReplace(c, i, mch, mul, ty, add) {
+		var cv = (ty === 'c') ? c : i;
 
-		if (!isNaN(mul) && mul !== 0) {
-			i *= mul;
+		mul = Number(mul);
+		if (!isNaN(mul)) {
+			cv *= mul;
 		}
+
+		add = Number(add);
 		if (!isNaN(add)) {
-			i += add;
+			cv += add;
 		}
-		return s.replace(mch[0], i);
+		return cv;
 	}
 
 	/**
 		set checked or selected property
-		@param o    {Object}    original element declaration
-		@param lo   {Object}    loop configuration object
+		@param o    {Object}    original dElement declaration object
+		@param lobj {Object}    loop configuration object
 		@param lc   {Integer}   loop counter
 		@param arr  {Array}     array of property names to process
-		@returns    {Object}    declaration with replaced values
+		@returns    {Object}    declaration object with replaced values
 	*/
-	function setCSFlags(o, lo, lc, arr) {
+	function setCSFlags(o, lobj, lc, arr) {
 		var i = arr.length,
 			c = lc + 1,
 			item, prp;
 
 		while (i--) {
 			item = arr[i];
-			if (hasOP(lo, item) && (
-				c === lo[item] ||
-				(Array.isArray(lo[item]) && lo[item].indexOf(c) > -1)
+			if (hasOP(lobj, item) && (
+				c === lobj[item] ||
+				(Array.isArray(lobj[item]) && lobj[item].indexOf(c) > -1)
 			)) {
 				prp = (item === 'sel') ? 'selected' : 'checked';
 				o[prp] = true;
@@ -1128,7 +1112,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** clone a node(tree) or a declaration */
 	function cloneObject(s) {
-		var scl, newEl,
+		var scl, el,
 			clo = hasOP(s, 'clone');
 
 		if (clo && hasOP(s, 'clonetop')) {
@@ -1136,15 +1120,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 		scl = s.clone || s.clonetop;
 		if (isAppendable(scl) && isMeth(scl, 'cloneNode')) {
-			newEl = scl.cloneNode(clo); /* clone: true, clonetop: false */
+			el = scl.cloneNode(clo); /* clone: true, clonetop: false */
 		}
 		else if (isObj(scl)) {
-			newEl = createTree(scl);
+			el = createTree(scl);
 		}
-		if (!isAppendable(newEl)) {
+		if (!isAppendable(el)) {
 			dError('this object can\'t be cloned: ' + scl);
 		}
-		return newEl;
+		return el;
 	}
 
 	/** test for declaration of child nodes for an empty content type element */
