@@ -241,7 +241,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			o = evtDcl.val,
 			el = evtDcl.el;
 
-
 		o = mapNames(o, {
 			'function': 'func',
 			'arguments': 'args'
@@ -478,7 +477,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		fobj.func.call(fobj.el, this);
 	}
 
-
 	/* ==============  LOOPS  ================= */
 
 	/* loop element creation and replace placeholders */
@@ -513,7 +511,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				start = Number(lobj.start);
 			}
 
-			/* validate values array (for placeholder !!v!!) */
+			/* validate 'values' array (for "v" placeholder) */
 			if (hasOP(lobj, 'values')) {
 				if (!Array.isArray(lobj.values)) {
 					dError('loop property "values" has to be an array');
@@ -540,7 +538,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		cnt = Math.abs(Math.round(cnt)); /* make count a positive integer */
 
 		frg = document.createDocumentFragment();
-
 
 		/* element loop */
 		lcnt = 0;
@@ -576,15 +573,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		@returns      {Object}    declaration with replaced values
 	*/
 	function replaceCounter(decl, i, c, isdeep, lobj) {
-		var o, phreg, p, op, cc, v;
+		var o, phreg, p, cc, v;
 
 		/* create copy of declaration */
 		o = ocp(decl);
 
-		/* RegExp to get all parts of !!..n..!! and !!..c..!! placeholders */
+		/* RegExp to match all parts of "n" and "c" placeholders */
 		phreg = /\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
-				/*  !!  |     number     |  mul   | nc | add/sub number  |  !! */
-				/*      |      [1]       |        | [2]|       [3]       |     */
+				/*  !!  |   mul number   |mul sign| nc | add/sub number  |  !!  */
+				/*      |      [1]       |        | [2]|       [3]       |      */
 
 		/* handle array index if "values" propery is an array */
 		if (hasOP(lobj, 'values')) {
@@ -595,25 +592,28 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 
 		for (p in o) {
-			if (isStr(o[p])) {
 			/* replace all placeholders in string */
-
-				op = o[p];
-
-				/* replace each placeholder "!!v!!" with array value */
-				if (Array.isArray(v) && op.indexOf('!!v!!') > -1) {
-					op = op.replace(/\!\!v\!\!/gi, v[cc]);
+			if (isStr(o[p])) {
+				/* replace each "v" placeholder with array value */
+				if (Array.isArray(v) && o[p].indexOf('!!v!!') > -1) {
+					o[p] = o[p].replace(
+						/\!\!v\!\!/gi,
+						v[cc]
+					);
 				}
 
-				/* calculate value of placeholder and replace it */
-				op = op.replace(phreg, loopReplace.bind(null, c, i));
-
-				/* write replaced string back to object property */
-				o[p] = op;
+				/* replace each "n" or "c" placeholder with its calculated value */
+				o[p] = o[p].replace(
+					phreg,
+					loopReplace.bind(null, c, i)
+				);
 			}
 			else if (
-			/* scan for placeholders in subdeclarations until a loop, loopstop or
-				loopdeep property is found or loop depth exceeds 1 on loop property */
+				/* scan for placeholders in subdeclarations until a loop, loopstop or
+					loopdeep property is found or loop depth exceeds 1 on loop property
+					(but always replace placeholders in first child declaration
+					[loopdepth = 0])
+				*/
 				p === 'child' &&
 				isObj(o.child) &&
 				!hasOP(o.child, 'loop') &&
@@ -629,7 +629,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return o;
 	}
 
-	/* callback for op.replace() in function replaceCounter:
+	/* callback for op.replace in function replaceCounter:
 		calculate value of placeholder and replace it */
 	function loopReplace(c, i, mch, mul, ty, add) {
 		var cv = (ty === 'c') ? c : i;
@@ -891,7 +891,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				}
 
 				/* if "ch" is not a stopchar or a no stop mode is activated, append "ch"
-					to "part" and do next loop */
+					to "part" and continue with next char */
 				if (stopChars.indexOf(ch) < 0 || stop === false) {
 					part += ch;
 					continue;
@@ -1055,7 +1055,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			return frg;
 		};
 	})();
-
 
 	/** appends elements, DOM tree or HTML written as string to a given parent
 		node element. */
@@ -1503,7 +1502,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** insert before element */
 	K345.DAPPEND_BEFORE  = 1;
-
 
 	/** insert after element */
 	K345.DAPPEND_AFTER   = 2;
