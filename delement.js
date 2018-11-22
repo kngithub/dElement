@@ -388,7 +388,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			}
 		}
 		catch (ex) {
-			el.setAttribute(rProp, val);
+			setAttribs(el, {name: rProp, value: val});
 		}
 		return el;
 	}
@@ -440,22 +440,21 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/** create HTML comment node
-		expects element reference as 'this'
 
 		If document.createComment() is not available, this function adds comment nodes
 		to node elements only
 	*/
-	function addComment(comm) {
+	function addComment(el, comm) {
 		if (Array.isArray(comm)) {
-			comm.forEach(addComment, this);
+			comm.forEach(addComment.bind(null, el));
 		}
 		else {
 			comm = ' ' + comm + ' ';
 			if (isMeth(document, 'createComment')) { /* node element and fragment */
-				this.appendChild(document.createComment(comm));
+				el.appendChild(document.createComment(comm));
 			}
-			else if (isMeth(this, 'insertAdjacentHTML')) { /* node element only, no fragment */
-				this.insertAdjacentHTML('beforeEnd', '<!--' + comm + '-->');
+			else if (isMeth(el, 'insertAdjacentHTML')) { /* node element only, no fragment */
+				el.insertAdjacentHTML('beforeEnd', '<!--' + comm + '-->');
 			}
 		}
 	}
@@ -730,10 +729,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				e.g.  attribute: {name: 'foo', value: 'bar'}
 			- an array with objects as described above
 	*/
-	function setAttribs(att) {
-		var el = this;
+	function setAttribs(el, att) {
 		if (Array.isArray(att)) {
-			att.forEach(setAttribs, el);
+			att.forEach(setAttribs.bind(null, el));
 		}
 		else if (
 			isNode(el) && isObj(att) && hasOP(att, 'name') &&
@@ -1091,21 +1089,19 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return s;
 	}
 
-	/** append child nodes
-		expects element reference as 'this'
-	*/
-	function appendChildNodes(sp) {
+	/** append child nodes */
+	function appendChildNodes(el, sp) {
 		if (Array.isArray(sp)) {
-			sp.forEach(appendTree, this);
+			sp.forEach(appendChildNodes.bind(null, el));
 		}
 		else if (isAppendable(sp)) {
-			this.appendChild(sp);
+			el.appendChild(sp);
 		}
 		else if (isObj(sp)) {
-			appendTree.call(this, sp);
+			appendTree.call(el, sp);
 		}
 		else {
-			this.appendChild(textNode(sp));
+			el.appendChild(textNode(sp));
 		}
 	}
 
@@ -1172,7 +1168,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				c++;
 				break;
 			case 'comment':
-				addComment.call(frg, s[prop]);
+				addComment(frg, s[prop]);
 				c++;
 				break;
 			}
@@ -1325,12 +1321,12 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* create a comment node */
 			case 'comment':
-				addComment.call(newEl, sp);
+				addComment(newEl, sp);
 				break;
 
 			/* process sub declaration object or declaration array */
 			case 'child':
-				appendChildNodes.call(newEl, sp);
+				appendChildNodes(newEl, sp);
 				break;
 
 			/* add eventhandler to current element */
@@ -1345,7 +1341,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/*  enforced usage of setAttribute() */
 			case 'attribute':
-				setAttribs.call(newEl, sp);
+				setAttribs(newEl, sp);
 				break;
 
 			/* css styles */
