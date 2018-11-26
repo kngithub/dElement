@@ -57,13 +57,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	''; 'use strict';
 
 		/* internal vars */
-	var eventStack, initStack, refs, loopdepth,
+	var _hasOP = Object.prototype.hasOwnProperty,
+		_slice = Array.prototype.slice,
+		eventStack, initStack, refs, loopdepth,
 
 		/* predefined data */
 		skipProps, saveProps, formProps, boolProps, multiProps,
 
 		/* functions */
-		dError, isNode, isEl, isAppendable, isTextNode, hasOP, parseElemStr, strToNodes;
+		dError, isNode, isEl, isAppendable, isTextNode, parseElemStr, strToNodes;
 
 	if (
 		!isMeth(Array, 'isArray') ||
@@ -91,13 +93,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			true, if p is a native property of o
 		@function
 	*/
-	hasOP = (function () {
-		var _hasOP = Object.prototype.hasOwnProperty;
-
-		return function (o, p) {
-			return _hasOP.call(o, p);
-		};
-	})();
+	function hasOP(o, p) {
+		return _hasOP.call(o, p);
+	}
 
 	/**#@+
 		@param {Node|Object} el
@@ -158,16 +156,16 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* create copy of object.
 		Simplified, because it will only be used for dElement declaration objects */
-	function ocp (o) {
+	function oCpy (o) {
 		var no = {}, p, op;
 		for (p in o) {
 			if (hasOP(o, p)) {
 				op = o[p];
 				if (Array.isArray(op)) {
-					no[p] = Array.prototype.slice.call(op, 0);
+					no[p] = _slice.call(op, 0);
 				}
 				else if (isObj(op)) {
-					no[p] = ocp(op);
+					no[p] = oCpy(op);
 				}
 				else {
 					no[p] = op;
@@ -575,7 +573,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var o, phreg, p, cc, v;
 
 		/* create copy of declaration */
-		o = ocp(decl);
+		o = oCpy(decl);
 
 		/* RegExp to match all parts of "n" and "c" placeholders */
 		phreg = /\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
@@ -695,20 +693,21 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/** save references of elements with name or id property */
-	function saveRefs(sdata) {
+	function saveRefs(rObj, sdata) {
 		var pr = sdata.s[sdata.p];
 
 		if (sdata.lp === 'id') {
-			this.i[pr] = sdata.el;
+			rObj.i[pr] = sdata.el;
 		}
 		else if (sdata.lp === 'name') {
-			if (Array.isArray(this.n[pr])) {
-				this.n[pr].push(sdata.el);
+			if (Array.isArray(rObj.n[pr])) {
+				rObj.n[pr].push(sdata.el);
 			}
 			else {
-				this.n[pr] = [sdata.el];
+				rObj.n[pr] = [sdata.el];
 			}
 		}
+		return rObj;
 	}
 
 	/* ==============  ATTRIBUTES  ================= */
@@ -1288,7 +1287,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* save element reference when prop is in saveProps */
 			if (isObj(refs) && saveProps.indexOf(lcProp) > -1) {
-				saveRefs.call(refs, {
+				refs = saveRefs(refs, {
 					s: s,
 					el: newEl,
 					p: prop,
