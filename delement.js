@@ -78,7 +78,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		!isObj(K345.attrNames) ||
 		!Array.isArray(K345.voidElements)
 	) {
-		dError('A required methods/property is missing or an external value' +
+		throw new dError('A required methods/property is missing or an external value' +
 			' is of wrong type.');
 	}
 
@@ -176,16 +176,34 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/** throw error
-		@function */
-	dError = (function () {
+		@function
+		@name dError
+	*/
+	(function () {
 		var cons = isMeth(console, 'error');
 
-		return function (txt) {
-			txt = 'dElement Error:\n' + txt + '\n';
-			if (cons) { console.error(txt); }
-			throw new Error(txt);
+		function F() {}
+
+		dError = function (message) {
+			var err;
+			this.message = message || '-';
+			this.name = 'dError';
+			err = new Error(this.message);
+			err.name = this.name;
+			this.stack = err.stack;
+			if (cons) {
+				console.error(this.message);
+			}
 		};
-	})();
+
+		if (isMeth(Object, 'create')) {
+			dError.prototype = Object.create(Error.prototype);
+		}
+		else {
+			F.prototype = Error.prototype;
+			dError.prototype = new F();
+		}
+	}());
 
 	/** map property names */
 	function mapNames(o, nmap) {
@@ -245,7 +263,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		});
 
 		if (!isObj(o) || !hasOP(o, 'args')) {
-			dError('Not a valid event declaration');
+			throw new dError('Not a valid event declaration');
 		}
 
 		if (Array.isArray(o.args)) {
@@ -330,7 +348,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				lcProp.indexOf('data-xml') > -1 ||  /* starts with xml */
 				lcProp.indexOf(';') > -1
 			) {
-				dError('data-* property/attribute name may not start with "xml" or' +
+				throw new dError('data-* property/attribute name may not start with "xml" or' +
 					' contain any semicolon or uppercase chars');
 			}
 
@@ -356,7 +374,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				return el;
 			}
 			else { /* not a valid value for boolProps */
-				dError(
+				throw new dError(
 					'switch attribute "' + prop + '" has an invalid value of "' + val +
 					'".\nValue may be the attribute\'s name or boolean true only.'
 				);
@@ -486,8 +504,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			frg, i, o, lprop, lobj, lcnt;
 
 		if (hasOP(s, 'loop') && isdeep) {
-			dError('You may use only one of "loop" OR "loopdeep", not both.');
-			return null;
+			throw new dError('You may use only one of "loop" OR "loopdeep", not both.');
 		}
 		lprop = (isdeep) ? 'loopdeep' : 'loop';
 		lobj = s[lprop];
@@ -511,11 +528,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			/* validate 'values' array (for "v" placeholder) */
 			if (hasOP(lobj, 'values')) {
 				if (!Array.isArray(lobj.values)) {
-					dError('loop property "values" has to be an array');
+					throw new dError('loop property "values" has to be an array');
 				}
 
 				if (!hasOP(lobj, 'valuesrepeat') && lobj.values.length < lobj.count) {
-					dError('"values" array has less elements (' + lobj.values.length +
+					throw new dError('"values" array has less elements (' + lobj.values.length +
 						') than loop count (' + lobj.count + ')');
 				}
 			}
@@ -524,7 +541,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			parr.forEach(function (item) {
 				if (hasOP(lobj, item)) {
 					if (!Array.isArray(lobj[item]) && isNaN(lobj[item])) {
-						dError('type of loop property "' + item + '" must be array or number');
+						throw new dError('type of loop property "' + item + '" must be array or number');
 					}
 				}
 			});
@@ -681,13 +698,13 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				sc.obj[sc.name] = el;
 			}
 			else {
-				dError(
+				throw new dError(
 					'duplicate declaration of ' + sc.name + ' in property "collect"'
 				);
 			}
 		}
 		else {
-			dError('Value of property "collect" must be an array or an object' +
+			throw new dError('Value of property "collect" must be an array or an object' +
 				' containing the properties "obj" and "name".');
 		}
 	}
@@ -788,7 +805,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		/* wrapper for parser errors */
 		function pError(str) {
-			dError('parser: ' + str);
+			throw new dError('Parser error: ' + str);
 		}
 
 		/* callback for [].filter: remove duplicate elements in array */
@@ -1042,7 +1059,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 						'uses named entities (restricted when using content-type ' +
 						'application/xhtml+xml.\nuse numeric entities instead)\n\n';
 				}
-				dError(
+				throw new dError(
 					txt + 'Error code: ' + ex.code + '\nError message: ' + ex.message +
 						'\nContent (leading 200 chars):\n"' + hstr.substring(0, 200) + '…"'
 				);
@@ -1072,7 +1089,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			item.forEach(addNodes.bind(null, el));
 		}
 		else {
-			dError('illegal type of property (' + item + ')');
+			throw new dError('illegal type of property (' + item + ')');
 		}
 		return el;
 	}
@@ -1110,7 +1127,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			clo = hasOP(s, 'clone');
 
 		if (clo && hasOP(s, 'clonetop')) {
-			dError('only one of "clone" or "clonetop" may be used.');
+			throw new dError('only one of "clone" or "clonetop" may be used.');
 		}
 		scl = s.clone || s.clonetop;
 		if (isAppendable(scl) && isMeth(scl, 'cloneNode')) {
@@ -1120,7 +1137,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			el = createTree(scl);
 		}
 		if (!isAppendable(el)) {
-			dError('this object can\'t be cloned: ' + scl);
+			throw new dError('this object can\'t be cloned: ' + scl);
 		}
 		return el;
 	}
@@ -1134,7 +1151,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		for (prop in s) {
 			lcProp = mapMultiProps(prop.toLowerCase());
 			if (pp.indexOf(lcProp) > -1) {
-				dError('content model of element "' + s.element.toUpperCase() +
+				throw new dError('content model of element "' + s.element.toUpperCase() +
 				'" is "empty". This element may not contain any child nodes');
 			}
 		}
@@ -1177,7 +1194,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			either "comm(ent)" or "html" is the only property of "s" and html is empty or
 			comment couldn't be added (fragment still empty) */
 		if (!frg.hasChildNodes() && c !== 1) {
-			dError(
+			throw new dError(
 				'Every (sub)declaration object requires at least one of the following ' +
 				'properties: "element", "text", "clone", "clonetop", "comment" or "html".'
 			);
@@ -1252,7 +1269,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		/* s.element holds the name of the element to be created */
 		if (!isStr(s.element)) {
-			dError('type of property "element" must be string');
+			throw new dError('type of property "element" must be string');
 		}
 
 		/* uses string parser if value of "s.element" contains chars other than a-z1-6 */
@@ -1381,7 +1398,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	K345.dElement = function (decl) {
 		var dtree;
 		if (!Array.isArray(decl) && !isObj(decl)) {
-			dError('Parameter has been omitted or is not an object/array');
+			throw new dError('Parameter has been omitted or is not an object/array');
 		}
 		/** collect events
 			@type Array */
