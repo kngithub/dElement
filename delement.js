@@ -21,16 +21,16 @@ if ('requireScript' in K345) {
 /** conversion table for HTML-attribute names
 	@type Object */
 K345.attrNames = K345.attrNames || {
-	'acceptcharset': 'acceptCharset', 'accesskey': 'accessKey', 'alink': 'aLink',
-	'bgcolor': 'bgColor', 'cellindex': 'cellIndex', 'cellpadding': 'cellPadding',
-	'cellspacing': 'cellSpacing', 'charoff': 'chOff', 'class': 'className',
-	'codebase': 'codeBase', 'codetype': 'codeType', 'colspan': 'colSpan',
-	'datetime': 'dateTime', 'for': 'htmlFor', 'frameborder': 'frameBorder',
-	'framespacing': 'frameSpacing', 'ismap': 'isMap', 'longdesc': 'longDesc',
-	'marginheight': 'marginHeight', 'marginwidth': 'marginWidth', 'maxlength': 'maxLength',
-	'nohref': 'noHref', 'noresize': 'noResize', 'nowrap': 'noWrap',
-	'readonly': 'readOnly', 'rowindex': 'rowIndex', 'rowspan': 'rowSpan',
-	'tabindex': 'tabIndex', 'usemap': 'useMap', 'valign': 'vAlign', 'vlink': 'vLink'
+	acceptcharset: 'acceptCharset', accesskey: 'accessKey', alink: 'aLink',
+	bgcolor: 'bgColor', cellindex: 'cellIndex', cellpadding: 'cellPadding',
+	cellspacing: 'cellSpacing', charoff: 'chOff', 'class': 'className',
+	codebase: 'codeBase', codetype: 'codeType', colspan: 'colSpan',
+	datetime: 'dateTime', 'for': 'htmlFor', frameborder: 'frameBorder',
+	framespacing: 'frameSpacing', ismap: 'isMap', longdesc: 'longDesc',
+	marginheight: 'marginHeight', marginwidth: 'marginWidth', maxlength: 'maxLength',
+	nohref: 'noHref', noresize: 'noResize', nowrap: 'noWrap',
+	readonly: 'readOnly', rowindex: 'rowIndex', rowspan: 'rowSpan',
+	tabindex: 'tabIndex', usemap: 'useMap', valign: 'vAlign', vlink: 'vLink'
 };
 
 /* @@CODEEND DATTR */
@@ -156,8 +156,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* create copy of object.
 		Simplified, because it will only be used for dElement declaration objects */
-	function oCpy (o) {
-		var no = {}, p, op;
+	function oCpy(o) {
+		var no = {},
+			p, op;
+
 		for (p in o) {
 			if (hasOP(o, p)) {
 				op = o[p];
@@ -182,11 +184,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	(function () {
 		var cons = isMeth(console, 'error');
 
-		function F() {}
 
 		dError = function (message) {
 			var err;
-			this.message = message || '-';
+
+			this.message = 'dElement Error:\n' + message + '\n';
 			this.name = 'dError';
 			err = new Error(this.message);
 			err.name = this.name;
@@ -200,6 +202,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			dError.prototype = Object.create(Error.prototype);
 		}
 		else {
+			/* eslint-disable-next-line no-inner-declarations */
+			function F() {}
 			F.prototype = Error.prototype;
 			dError.prototype = new F();
 		}
@@ -208,6 +212,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/** map property names */
 	function mapNames(o, nmap) {
 		var pr;
+
 		for (pr in nmap) {
 			if (hasOP(o, pr)) {
 				o[nmap[pr]] = o[pr];
@@ -532,8 +537,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				}
 
 				if (!hasOP(lobj, 'valuesrepeat') && lobj.values.length < lobj.count) {
-					throw new dError('"values" array has less elements (' + lobj.values.length +
-						') than loop count (' + lobj.count + ')');
+					throw new dError(
+						'"values" array has less elements (' + lobj.values.length +
+						') than loop count (' + lobj.count + ')'
+					);
 				}
 			}
 
@@ -541,7 +548,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			parr.forEach(function (item) {
 				if (hasOP(lobj, item)) {
 					if (!Array.isArray(lobj[item]) && isNaN(lobj[item])) {
-						throw new dError('type of loop property "' + item + '" must be array or number');
+						throw new dError(
+							'type of loop property "' + item + '" must be array or number'
+						);
 					}
 				}
 			});
@@ -619,7 +628,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				/* replace each "n" or "c" placeholder with its calculated value */
 				o[p] = o[p].replace(
 					phreg,
-					loopReplace.bind(null, c, i)
+					loopReplace.bind({c: c, i: i})
 				);
 			}
 			else if (
@@ -645,8 +654,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* callback for op.replace in function replaceCounter:
 		calculate value of placeholder and replace it */
-	function loopReplace(c, i, mch, mul, ty, add) {
-		var cv = (ty === 'c') ? c : i;
+	function loopReplace(mch, mul, ty, add) {
+		var cv = (ty === 'c')
+			? this.c
+			: this.i;
 
 		mul = Number(mul);
 		if (!isNaN(mul)) {
@@ -874,7 +885,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			if (hasOP(modeChars, ch)) {
 				mode = ch;
 				i++;
-				if (!(/\$[a-z][a-z1-6]?/i.test(str))) { /* tag name not defined*/
+				if (!((/\$[a-z][a-z1-6]?/i).test(str))) { /* tag name not defined*/
 					pError('extended syntax without element node name definition\n"' +
 						str + '"');
 				}
@@ -1017,10 +1028,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				}
 				return document.createElement(elp);
 			}).bind({ /* define parent elements for some element types. */
-				'tr': 'tbody', 'tbody': 'table', 'thead': 'table', 'th': 'tr', 'td': 'tr',
-				'tfoot': 'table', 'caption': 'table', 'option': 'select', 'li': 'ul',
-				'dd': 'dl', 'dt': 'dl', 'optgroup': 'select', 'figcaption': 'figure',
-				'menuitem': 'menu', 'legend': 'fieldset', 'summary': 'details'
+				tr: 'tbody', tbody: 'table', thead: 'table', th: 'tr', td: 'tr',
+				tfoot: 'table', caption: 'table', 'option': 'select', li: 'ul',
+				dd: 'dl', dt: 'dl', optgroup: 'select', figcaption: 'figure',
+				menuitem: 'menu', legend: 'fieldset', summary: 'details'
 			});
 		}
 
@@ -1099,6 +1110,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		appendTree.call(el, dcl) */
 	function appendTree(dcl) {
 		var s = createTree(dcl);
+
 		if (s) {
 			this.appendChild(s);
 		}
@@ -1147,7 +1159,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var pp = ['text', 'html', 'child'],
 			prop, lcProp;
 
-		/* eslint-disable guard-for-in, default-case */
+		/* eslint-disable guard-for-in */
 		for (prop in s) {
 			lcProp = mapMultiProps(prop.toLowerCase());
 			if (pp.indexOf(lcProp) > -1) {
@@ -1155,7 +1167,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				'" is "empty". This element may not contain any child nodes');
 			}
 		}
-		/* eslint-enable guard-for-in, default-case */
+		/* eslint-enable guard-for-in */
 	}
 
 	/** if a declaration "s" doesn't contain a property "element", then there has to be
@@ -1237,10 +1249,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		/* normalize shortcut keywords */
 		s = mapNames(s, {
-			'cond': 'condition',
-			'comm': 'comment',
-			'attrib': 'attribute',
-			'attr': 'attribute'
+			cond: 'condition',
+			comm: 'comment',
+			attrib: 'attribute',
+			attr: 'attribute'
 		});
 
 		/* stop processing if property 'condition' exist and it's value is falsy */
@@ -1397,6 +1409,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	*/
 	K345.dElement = function (decl) {
 		var dtree;
+
 		if (!Array.isArray(decl) && !isObj(decl)) {
 			throw new dError('Parameter has been omitted or is not an object/array');
 		}
@@ -1442,7 +1455,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		'afterBegin' or<br>
 		K345.DAPPEND_FIRST   -> append as first child of element<br>
 		'wipeContent' or<br>
-		K345.DAPPEND_WIPE    -> wipe existing child elements and append as child of element<br><br>
+		K345.DAPPEND_WIPE    -> wipe existing child elements and append as child of
+		element<br><br>
 
 		mode values may *not* be combined!
 
@@ -1492,7 +1506,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 					elem.removeChild(elc);
 				}
 				/*jsl:fallthru*/ /* eslint-disable-next-line no-fallthrough */
-
 			case 'beforeEnd':
 			case K345.DAPPEND_APPEND:
 			case K345.DAPPEND_LAST:

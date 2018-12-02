@@ -337,7 +337,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "button with event",
+		txt: 'button with event',
 		arr: nodes2,
 		decl: {
 			element: 'button',
@@ -367,7 +367,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "extended element syntax",
+		txt: 'extended element syntax',
 		arr: nodes2,
 		decl: [{
 			element: 'button .u #extsyn \x03 @button =this is just a test... = don\'t worry, be #happy!\x1F .test',
@@ -384,7 +384,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "html string with event",
+		txt: 'html string with event',
 		arr: nodes2,
 		decl: {
 			element: 'sub',
@@ -398,7 +398,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "set and read data",
+		txt: 'set and read data',
 		arr: nodes2,
 		decl: {
 			element: 'span',
@@ -418,14 +418,14 @@ try {
 					da = el.getAttribute('data-the-answer');
 					t = ' (getAttribute)';
 				}
-				alert("value of data attribute is " +  da + t);
+				alert('value of data attribute is ' +  da + t);
 			},
 			child: ' mee!'
 		}
 	});
 
 	dTest.add({
-		txt: "html & text",
+		txt: 'html & text',
 		arr: nodes2,
 		decl: {
 			html: '<s>strike through by HTML &lt;s&gt; element</s>',
@@ -436,7 +436,7 @@ try {
 	reffi = {};
 
 	dTest.add({
-		txt: "collect & elrefs",
+		txt: 'collect & elrefs',
 		arr: nodes2,
 		decl: {
 			element: 'span',
@@ -479,7 +479,7 @@ try {
 
 	// this section contains some implicit toString() calls
 	dTest.add({
-		txt: "legal/illegal stuff + implicit toString() calls",
+		txt: 'legal/illegal stuff + implicit toString() calls',
 		arr: nodes2,
 		decl: [
 			{text: 'foobar'},
@@ -520,7 +520,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "extended syntax w/o element node name",
+		txt: 'extended syntax w/o element node name',
 		arr: nodes2,
 		catchex: true,
 		decl: {
@@ -529,7 +529,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "html string array + multiple events",
+		txt: 'html string array + multiple events',
 		arr: nodes2,
 		decl: [{
 			element: 'span',
@@ -567,7 +567,7 @@ try {
 	xxx = K345.dElement({element: 'span', text: 'yooo'});
 
 	dTest.add({
-		txt: "clone",
+		txt: 'clone',
 		arr: nodes2,
 		decl: [
 			xxx,
@@ -576,7 +576,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "try to append child to empty element",
+		txt: 'try to append child to empty element',
 		arr: nodes2,
 		catchex: true,
 		decl: {
@@ -586,7 +586,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "try to use illegal data name",
+		txt: 'try to use illegal data name',
 		arr: nodes2,
 		catchex: true,
 		decl: {
@@ -596,7 +596,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "try to use a property without one of the required properties",
+		txt: 'try to use a property without one of the required properties',
 		arr: nodes2,
 		catchex: true,
 		decl: {
@@ -605,7 +605,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "loop [!!c!!]=>!!n!!, start 1.2 step 0.25",
+		txt: 'loop [!!c!!]=>!!n!!, start 1.2 step 0.25',
 		arr: nodes2,
 		decl: {
 			element: 'span',
@@ -619,7 +619,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "loop [!!n!!]=>!!1.5n+1!!",
+		txt: 'loop [!!n!!]=>!!1.5n+1!!',
 		arr: nodes2,
 		decl: {
 			element: 'span',
@@ -632,7 +632,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "loop 20x start 2 step 2",
+		txt: 'loop 20x start 2 step 2',
 		arr: nodes2,
 		decl: {
 			element: 'a',
@@ -688,7 +688,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "loop 10x <li>!!n!!<span>!!n+1!!<span>!!2n+1!!</span></span></li>",
+		txt: 'loop 10x <li>!!n!!<span>!!n+1!!<span>!!2n+1!!</span></span></li>',
 		arr: nodes2,
 		decl: {
 			element: 'ol',
@@ -712,14 +712,14 @@ try {
 	});
 
 	dTest.add({
-		txt: "select with options + event",
+		txt: 'select with options + event',
 		arr: nodes2,
 		decl: [{
 			element: 'br'
 		}, {
 			element: 'select',    // select with three options
 			id: 'sel1',
-			onchange: function() {
+			onchange: function () {
 				b.innerHTML = this.value;
 			},
 			child: [{
@@ -743,14 +743,14 @@ try {
 	});
 
 	dTest.add({
-		txt: "select with options + event II - loop",
+		txt: 'select with options + event II - loop',
 		arr: nodes2,
 		decl: [{
 			element: 'br'
 		}, {
 			element: 'select',    // select with three options
 			id: 'sel2',
-			onchange: function() {
+			onchange: function () {
 				bz.innerHTML = this.value;
 			},
 			child: {
@@ -770,7 +770,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "loop create checkboxes with predefined status",
+		txt: 'loop create checkboxes with predefined status',
 		arr: nodes3,
 		decl: [{
 			element: 'input @checkbox ~bh',
@@ -781,7 +781,8 @@ try {
 
 				if (el.checked) {
 					s.className += ' chk';
-				} else {
+				}
+				else {
 					s.className = s.className.replace(/\schk(\s|$)/i, '');
 				}
 			},
@@ -797,7 +798,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "extended sytax + comment",
+		txt: 'extended sytax + comment',
 		arr: nodes3,
 		decl: {
 			element: 'H3 .generated #about-1 .headlines',
@@ -808,7 +809,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "regular dElement",
+		txt: 'regular dElement',
 		arr: nodes3,
 		decl: {
 			element: 'div',
@@ -860,7 +861,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "extended Syntax",
+		txt: 'extended Syntax',
 		arr: nodes3,
 		decl: {
 			element: 'div',
@@ -926,7 +927,7 @@ try {
 	});
 
 	dTest.add({
-		txt: "text fun",
+		txt: 'text fun',
 		arr: nodes2,
 		decl: [
 			'foo',
@@ -937,7 +938,8 @@ try {
 		]
 	});
 
-} catch (ex) { // catch all generic errors
+}
+catch (ex) { // catch all generic errors
 	alert(ex.message);
 }
 </script>
@@ -947,7 +949,7 @@ try {
 
 var getChecked;
 
-function repl1 (s) {
+function repl1(s) {
 	s = s.replace(/</g, '&lt;');
 	if (K345.ieVer !== undefined && K345.ieVer < 9) {
 		s = s.replace(/\r/g, '')
@@ -957,7 +959,7 @@ function repl1 (s) {
 	return s;
 }
 
-function repl2 (s) {
+function repl2(s) {
 	s = s.replace(/nodes\d*\.push\(/gi, 'tr = ')
 		.replace(/\)\);/g, ');')
 		.replace(/\t/g, '   ')
@@ -967,7 +969,7 @@ function repl2 (s) {
 	return repl1(s);
 }
 
-function getElementsByProp (prop, name) {
+function getElementsByProp(prop, name) {
 	var i, len, arr = [],
 		ecoll = document.getElementsByName(name);
 
