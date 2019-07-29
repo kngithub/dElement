@@ -4,16 +4,16 @@
 */
 
 /* %% devel on %% */
-/* eslint-disable */
-/*global K345, document*/
+	/* eslint-disable */
+	/*global K345, document*/
 
-/** @namespace */
-var K345 = K345 || {};
+	/** @namespace */
+	var K345 = K345 || {};
 
-if ('requireScript' in K345) {
-	K345.requireScript('array16', 'function');
-}
-/* eslint-enable */
+	if ('requireScript' in K345) {
+		K345.requireScript('array16', 'function');
+	}
+	/* eslint-enable */
 /* %% devel off %% */
 
 /* @@CODESTART DATTR "Javascript" */
@@ -85,11 +85,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/* ==============  COMMON FUNCTIONS  ================= */
 
 	/** test: object o has own property p
-		@param {Object} o
+		@param {object} o
 			Object to test
-		@param {String} p
+		@param {string} p
 			Property which must be in o
-		@returns {Boolean}
+		@returns {boolean}
 			true, if p is a native property of o
 		@function
 	*/
@@ -98,9 +98,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/**#@+
-		@param {Node|Object} el
+		@param {Element|object} el
 			Element to test
-		@returns {Boolean}
+		@returns {boolean}
 			true, if nodetype matches.
 		@function
 	*/
@@ -151,6 +151,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/** test: is "m" a method of "o"? */
 	function isMeth(o, m) {
 		var t = typeof o[m];
+
 		return ('function|unknown'.indexOf(t) > -1) || (t === 'object' && !!o[m]);
 	}
 
@@ -178,15 +179,20 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/** throw error
-		@function
-		@name dError
-	*/
-	(function () {
-		var cons = isMeth(console, 'error');
+		@param {string} message error message
+		@constructor
+		@name dError */
+	dError = (function () {
+		var cons = isMeth(console, 'error'),
+			F;
 
-
-		dError = function (message) {
+		/* throw error */
+		function dErr(message) {
 			var err;
+
+			if (!this || !(this instanceof Error)) {
+				throw new dError(message);
+			}
 
 			this.message = 'dElement Error:\n' + message + '\n';
 			this.name = 'dError';
@@ -196,18 +202,18 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			if (cons) {
 				console.error(this.message);
 			}
-		};
+		}
 
 		if (isMeth(Object, 'create')) {
-			dError.prototype = Object.create(Error.prototype);
+			dErr.prototype = Object.create(Error.prototype);
 		}
 		else {
-			/* eslint-disable-next-line no-inner-declarations */
-			function F() {}
+			F = function () {};
 			F.prototype = Error.prototype;
-			dError.prototype = new F();
+			dErr.prototype = new F();
 		}
-	}());
+		return dErr;
+	})();
 
 	/** map property names */
 	function mapNames(o, nmap) {
@@ -244,7 +250,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	saveProps = ['id', 'name'];
 
 	/** recursion counter for variable replacement depth in loop
-		@type Number */
+		@type number */
 	loopdepth = 0;
 
 	/** attributes of 'boolean' type. value may be either empty or the attribute name
@@ -588,12 +594,12 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/**
 		find placeholders and replace them with committed values
 
-		@param decl   {Object}    dElement declaration object
-		@param i      {Number}    calculated value
-		@param c      {Integer}   loop counter
-		@param isdeep {Boolean}   recursive replace in subdeclarations
-		@param lobj   {Object}    loop configuration object
-		@returns      {Object}    declaration with replaced values
+		@param decl   {object}    dElement declaration object
+		@param i      {number}    calculated value
+		@param c      {integer}   loop counter
+		@param isdeep {boolean}   recursive replace in subdeclarations
+		@param lobj   {object}    loop configuration object
+		@returns      {object}    declaration with replaced values
 	*/
 	function replaceCounter(decl, i, c, isdeep, lobj) {
 		var o, phreg, p, cc, v;
@@ -673,11 +679,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/**
 		set checked or selected property
-		@param o    {Object}    original dElement declaration object
-		@param lobj {Object}    loop configuration object
+		@param o    {object}    original dElement declaration object
+		@param lobj {object}    loop configuration object
 		@param lc   {Integer}   loop counter
 		@param arr  {Array}     array of property names to process
-		@returns    {Object}    declaration object with replaced values
+		@returns    {object}    declaration object with replaced values
 	*/
 	function setCSFlags(o, lobj, lc, arr) {
 		var i = arr.length,
@@ -743,6 +749,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/** replace special property names */
 	function replaceAttrName(atn) {
 		var lcAtt = atn.toLowerCase();
+
 		return (lcAtt in K345.attrNames)
 			? K345.attrNames[lcAtt]
 			: camelCase(atn);
@@ -777,7 +784,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* ==============  PARSE EXTENDED SYNTAX  ================= */
 
-	/* parseElemStr() */
+	/* parseElemStr() */ /*eslint-disable no-multi-spaces */
 	parseElemStr = (function () {
 		var ETX = '\x03', /* 0x03 (ETX, end of text) */
 			US  = '\x1F', /* 0x1F (US, unit separator) */
@@ -803,6 +810,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		modeChars[MODE_NAME]    = {attrName: 'name'};
 		modeChars[MODE_TYPE]    = {attrName: 'type'};
 		modeChars[MODE_VALUE]   = {attrName: 'value', stop: false};
+		/*eslint-enable no-multi-spaces */
 
 		for (pr in modeChars) {
 			if (hasOP(modeChars, pr)) {
@@ -833,9 +841,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		/** join class names from extended syntax and className property, remove
 			duplicates
 
-			@param {Object}    dcl    element declaration
+			@param {object}    dcl    element declaration
 			@param {Array}     cArr   array with class names from parse
-			@returns {String}         space separated class names as string
+			@returns {string}         space separated class names as string
 		*/
 		function joinClassNames(dcl, cArr) {
 			if (hasOP(dcl, 'className')) {
@@ -850,9 +858,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			parse element string for id, name, class names, value and type and create
 			correlating properties
 
-			@param dcl {Object}
+			@param dcl {object}
 				current element tree declaration object
-			@returns {Object}
+			@returns {object}
 				altered element tree declaration object
 			@function
 			@name parseElemStr
@@ -1027,7 +1035,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 					elp = this[m[1]];
 				}
 				return document.createElement(elp);
-			}).bind({ /* define parent elements for some element types. */
+			}).bind({
+				/* define parent elements for some element types. */
 				tr: 'tbody', tbody: 'table', thead: 'table', th: 'tr', td: 'tr',
 				tfoot: 'table', caption: 'table', 'option': 'select', li: 'ul',
 				dd: 'dl', dt: 'dl', optgroup: 'select', figcaption: 'figure',
@@ -1402,9 +1411,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/* ==============  dElement() & dAppend()  ================= */
 
 	/** create node tree from declaration
-		@param   {Object} decl
+		@param   {object} decl
 			element declaration
-		@returns {Nodes|null}
+		@returns {Element|null}
 			node tree or fragment or null
 	*/
 	K345.dElement = function (decl) {
@@ -1435,7 +1444,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** dAppend: create node tree and append it to an existing element
 
-		@param {node|string} elem
+		@param {Element|string} elem
 			element reference or id as string
 
 		@param {object} dcl
@@ -1517,30 +1526,47 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return nodes;
 	};
 
-	/**#@+
+	/** append as last child of element (default).
 		mode flag for {@link K345.dAppend()}
 		@type Constant
 	*/
-	/** append as last child of element (default) */
-	K345.DAPPEND_APPEND  = 0;
-	K345.DAPPEND_LAST    = 0;
+	K345.DAPPEND_APPEND = 0;
 
-	/** insert before element */
-	K345.DAPPEND_BEFORE  = 1;
+	/** append as last child of element (default).
+		mode flag for {@link K345.dAppend()}
+		@type Constant
+	*/
+	K345.DAPPEND_LAST = 0;
 
-	/** insert after element */
-	K345.DAPPEND_AFTER   = 2;
+	/** insert before element.
+		mode flag for {@link K345.dAppend()}
+		@type Constant
+	*/
+	K345.DAPPEND_BEFORE = 1;
 
-	/** replace element */
+	/** insert after element.
+		mode flag for {@link K345.dAppend()}
+		@type Constant
+	*/
+	K345.DAPPEND_AFTER = 2;
+
+	/** replace element.
+		mode flag for {@link K345.dAppend()}
+		@type Constant
+	*/
 	K345.DAPPEND_REPLACE = 3;
 
-	/** append as first child */
-	K345.DAPPEND_FIRST   = 4;
+	/** append as first child.
+		mode flag for {@link K345.dAppend()}
+		@type Constant
+	*/
+	K345.DAPPEND_FIRST = 4;
 
-	/** wipe all existing child nodes and append */
-	K345.DAPPEND_WIPE    = 5;
-	/**#@- */
-
+	/** wipe all existing child nodes and append.
+		mode flag for {@link K345.dAppend()}
+		@type Constant
+	*/
+	K345.DAPPEND_WIPE = 5;
 })();
 
 /* @@CODEEND DELEM */
