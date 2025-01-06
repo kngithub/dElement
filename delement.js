@@ -1,13 +1,23 @@
 /*!
-	delement.js 
-	K345 2006-2023
+	delement.js ö
+	K345 2006-2022
 
 	dElement() http://js.knrs.de
-	No recent or fancy programming styles or es6+ versions for now.
+	No recent or fancy programming styles or es6+ versions will be used for now.
 */
 
-/** @namespace */
-var K345 = K345 || {};
+/* %% devel on %% */
+	/* eslint-disable */
+	/*global K345, document*/
+	/** @namespace */
+	var K345 = K345 || {};
+	/* eslint-enable */
+
+	/* eslint new-cap: ["error", { "newIsCapExceptions": ["dError"] }] */
+
+/* %% devel off %% */
+
+/* @@CODESTART DATTR "Javascript" */
 
 /** conversion table for HTML-attribute names
 	@type {object} */
@@ -23,12 +33,15 @@ K345.attrNames = K345.attrNames || {
 	readonly: 'readOnly', rowindex: 'rowIndex', rowspan: 'rowSpan',
 	tabindex: 'tabIndex', usemap: 'useMap', valign: 'vAlign', vlink: 'vLink'};
 
+/* @@CODEEND DATTR */
+
 /** names of HTML elements with content type "void"
 	@type {Array} */
 K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col',
 	'command', 'embed', 'frame', 'hr', 'img', 'input', 'isindex', 'keygen', 'link', 'meta',
 	'param', 'source', 'track', 'wbr'];
 
+/* @@CODESTART DELEM "Javascript" */
 /**
 	dElement / dAppend
 	requires Array.isArray()
@@ -704,8 +717,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			appendTree.call(frg, o);
 			lcnt++;
 		}
-		// TEMP: wait ... why did I deactivate this line? Is it needed?
-		// s[lprop] = lobj;
+		// write it back to s
+		s[lprop] = lobj;
+
 		return frg;
 	}
 
@@ -1818,5 +1832,13 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	K345.DAPPEND_WIPE = 5;
 
 })(K345.attrNames, K345.voidElements);
+
+/* @@CODEEND DELEM */
+
+/* %% devel on %% */
+if ('registerScript' in K345) {
+	K345.registerScript('delement');
+}
+/* %% devel off %% */
 
 /* EOF */
