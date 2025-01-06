@@ -212,14 +212,14 @@ var el = K345.dElement({
 # dAppend()
 helper function
 
-dAppend calls dElement and appends created elements to DOM tree.
+dAppend calls dElement and appends created elements to an existing element in DOM tree.
 
 ```javascript
 // usage
 K345.dAppend(
-    String <id> | Node <reference to element>,
-    Object <declaration>
-    [, Const <appendmode> = K345.DAPPEND_APPEND ]
+    String <element id> | Node <reference to element>,
+    Object <dElement declaration>
+    [, Const|String <appendmode> = K345.DAPPEND_APPEND ]
 );
 ```
 
