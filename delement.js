@@ -1,25 +1,16 @@
 /*!
-	delement.js ö
-	K345 2006-2018
+	delement.js 
+	K345 2006-2023
+
+	dElement() http://js.knrs.de
+	No recent or fancy programming styles or es6+ versions for now.
 */
 
-/* %% devel on %% */
-	/* eslint-disable */
-	/*global K345, document*/
-
-	/** @namespace */
-	var K345 = K345 || {};
-
-	if ('requireScript' in K345) {
-		K345.requireScript('array16', 'function');
-	}
-	/* eslint-enable */
-/* %% devel off %% */
-
-/* @@CODESTART DATTR "Javascript" */
+/** @namespace */
+var K345 = K345 || {};
 
 /** conversion table for HTML-attribute names
-	@type Object */
+	@type {object} */
 K345.attrNames = K345.attrNames || {
 	acceptcharset: 'acceptCharset', accesskey: 'accessKey', alink: 'aLink',
 	bgcolor: 'bgColor', cellindex: 'cellIndex', cellpadding: 'cellPadding',
@@ -30,18 +21,14 @@ K345.attrNames = K345.attrNames || {
 	marginheight: 'marginHeight', marginwidth: 'marginWidth', maxlength: 'maxLength',
 	nohref: 'noHref', noresize: 'noResize', nowrap: 'noWrap',
 	readonly: 'readOnly', rowindex: 'rowIndex', rowspan: 'rowSpan',
-	tabindex: 'tabIndex', usemap: 'useMap', valign: 'vAlign', vlink: 'vLink'
-};
-
-/* @@CODEEND DATTR */
+	tabindex: 'tabIndex', usemap: 'useMap', valign: 'vAlign', vlink: 'vLink'};
 
 /** names of HTML elements with content type "void"
-	@type Array */
+	@type {Array} */
 K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col',
 	'command', 'embed', 'frame', 'hr', 'img', 'input', 'isindex', 'keygen', 'link', 'meta',
 	'param', 'source', 'track', 'wbr'];
 
-/* @@CODESTART DELEM "Javascript" */
 /**
 	dElement / dAppend
 	requires Array.isArray()
@@ -53,116 +40,177 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	requires K345.attrNames
 	requires K345.voidElements
 */
-(function () {
+(function (attrNames, voidElems) {
 	''; 'use strict';
 
 		/* internal vars */
-	var _hasOP = Object.prototype.hasOwnProperty,
-		_slice = Array.prototype.slice,
+	var _slice = Array.prototype.slice,
+		dAppend_regex = (/[#\.=\[\]:\s]+/),
 		eventStack, initStack, refs, loopdepth,
 
 		/* predefined data */
 		skipProps, saveProps, formProps, boolProps, multiProps,
 
 		/* functions */
-		dError, isNode, isEl, isAppendable, isTextNode, parseElemStr, strToNodes;
-
-	if (
-		!isMeth(Array, 'isArray') ||
-		!isMeth(Array.prototype, 'filter') ||
-		!isMeth(Array.prototype, 'forEach') ||
-		!isMeth(Array.prototype, 'indexOf') ||
-		!isMeth(Array.prototype, 'some') ||
-		!isMeth(Function.prototype, 'bind') ||
-		!isMeth(document, 'createDocumentFragment') ||
-		!isObj(K345.attrNames) ||
-		!Array.isArray(K345.voidElements)
-	) {
-		throw new dError('A required methods/property is missing or an external value' +
-			' is of wrong type.');
-	}
+		hasOwn, dError, isNode, isEl, isAppendable, isTextNode, parseElemStr, strToNodes;
 
 	/* ==============  COMMON FUNCTIONS  ================= */
 
-	/** test: object o has own property p
-		@param {object} o
+	/** test if object 'obj' has own property 'prop'
+		@param {object} obj
 			Object to test
-		@param {string} p
-			Property which must be in o
+		@param {string} prop
+			Property which must be in 'obj'
 		@returns {boolean}
-			true, if p is a native property of o
+			true, if 'prop' is a native property of 'obj'
 		@function
 	*/
-	function hasOP(o, p) {
-		return _hasOP.call(o, p);
-	}
+	hasOwn = (function () {
+		return (isMeth(Object, 'hasOwn'))
 
-	/**#@+
-		@param {Element|object} el
-			Element to test
-		@returns {boolean}
-			true, if nodetype matches.
-		@function
-	*/
+			/* browsers supporting Object.hasOwn() */
+			? function (obj, prop) {
+				return Object.hasOwn(obj, prop);
+			}
+
+			/* fallback for browsers without Object.hasOwn support */
+			: function (obj, prop) {
+				return Object.prototype.hasOwnProperty.call(obj, prop);
+			};
+	})();
 
 	/** test if el is a nodeElement and has a specific nodeType
-		@this {Array} allowed nodeTypes to test against */
-	function nodeTest(el) {
+		@param {HTMLElement} el
+			Element to test
+		@returns {boolean}
+			true, if nodetype matches item in array '@this'.
+		@this {Array} allowed nodeTypes to test against
+	*/
+	function nodeTest (el) {
 		/* "nodeType" in el must NOT be replaced by call to hasOwnProperty! */
 		return isObj(el) && 'nodeType' in el && this.indexOf(el.nodeType) > -1;
 	}
 
 	/** test: is 'el' a DOM element?
-		returns true if 'el' is a nodeElement(1) */
-	isEl = nodeTest.bind([1]);
+		@function
+		@name isEl
+		@param {HTMLElement} el
+			Element to test
+		@returns {boolean}
+			true if 'el' is a nodeElement(1)
+	*/
+	isEl = nodeTest.bind([
+		Node.ELEMENT_NODE
+	]);
 
-	/** test: is 'el' a DOM element?
-		returns true if 'el' is a nodeElement(1) or a documentFragment(11) */
-	isNode = nodeTest.bind([1, 11]);
+	/** test: is 'el' a DOM element or a documentFragment?
+		@function
+		@name isNode
+		@param {HTMLElement} el
+			Element to test
+		@returns {boolean}
+			true if 'el' is a nodeElement(1) or a documentFragment(11)
+	*/
+	isNode = nodeTest.bind([
+		Node.ELEMENT_NODE,
+		Node.DOCUMENT_FRAGMENT_NODE
+	]);
 
 	/** test: can 'el' be appended to nodeElements?
-		returns true if 'el' is a nodeElement(1), a documentFragment(11),
-		a comment(8) or a textNode(3) */
-	isAppendable = nodeTest.bind([1, 3, 8, 11]);
+		@function
+		@name isAppendable
+		@param {HTMLElement} el
+			Element to test
+		@returns {boolean}
+			true if 'el' is a nodeElement(1), a documentFragment(11),
+			a comment(8) or a textNode(3)
+	*/
+	isAppendable = nodeTest.bind([
+		Node.ELEMENT_NODE,
+		Node.TEXT_NODE,
+		Node.COMMENT_NODE,
+		Node.DOCUMENT_FRAGMENT_NODE
+	]);
 
 	/** test: is 'el' a text node?
-		returns true if 'el' is a textNode(3) */
-	isTextNode = nodeTest.bind([3]);
+		@function
+		@name isTextNode
+		@param {HTMLElement} el
+			Element to test
+		@returns {boolean}
+			true if 'el' is a textNode(3)
+	*/
+	isTextNode = nodeTest.bind([
+		Node.TEXT_NODE
+	]);
 
-	/**#@- */
+	/**
+		remove dash(es) (-) from a string and convert the following char to uppercase
+		( no-text => noText  it-is-fine => itIsFine)
 
-	/* remove dash from string and convert following char to uppercase */
-	function camelCase(str) {
+		@param {string} str
+			original string
+		@returns {string}
+			modified string
+	*/
+	function camelCase (str) {
 		return str.replace(/\-./g, function (s) {
 			return s.substr(1).toUpperCase();
 		});
 	}
 
-	/** test: is item a string */
-	function isStr(item) {
+	/**
+		test: is item a string?
+		@param {*} item
+			given item to test against
+		@returns {boolean}
+			true, if type of given item is 'string'
+	*/
+	function isStr (item) {
 		return typeof item === 'string';
 	}
 
-	/** test: is o an object and not null? (simple test) */
-	function isObj(o) {
-		return o !== null && typeof o === 'object' && !Array.isArray(o);
+	/**
+		test: is o an object but not null or Array object? (simple test)
+		@param {*} item
+			given item to test against
+		@returns {boolean}
+			true, if type of given item is 'object'
+	*/
+	function isObj (item) {
+		return item !== null && typeof item === 'object' && !Array.isArray(item);
 	}
 
-	/** test: is "m" a method of "o"? */
-	function isMeth(o, m) {
+	/**
+		test: is "m" a method of "o"?
+		@param {object} o
+			the given object
+		@param {string} m
+			method name which should be found in object "o"
+		@returns {boolean}
+			true, if object "o" contains a method "m"
+	*/
+	function isMeth (o, m) {
 		var t = typeof o[m];
 
-		return ('function|unknown'.indexOf(t) > -1) || (t === 'object' && !!o[m]);
+		return ('function|unknown'.indexOf(t) > -1) || (t === 'object' && Boolean(o[m]));
 	}
 
-	/* create copy of object.
-		Simplified, because it will only be used for dElement declaration objects */
-	function oCpy(o) {
+	/**
+		create deep copy of an object.
+		IMPORTANT: Simplified, because it will only be used for dElement
+			declaration objects
+		@param {object} o
+			object to be cloned
+		@returns {object}
+			the copy of o
+	*/
+	function oCpy (o) {
 		var no = {},
 			p, op;
 
 		for (p in o) {
-			if (hasOP(o, p)) {
+			if (hasOwn(o, p)) {
 				op = o[p];
 				if (Array.isArray(op)) {
 					no[p] = _slice.call(op, 0);
@@ -178,16 +226,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return no;
 	}
 
-	/** throw error
-		@param {string} message error message
-		@constructor
-		@name dError */
+	/* throw error */
 	dError = (function () {
-		var cons = isMeth(console, 'error'),
-			F;
+		var F;
 
-		/* throw error */
-		function dErr(message) {
+		/** throw error
+			@param {string} message error message
+			@class
+			@name dError */
+		function dErr (message) {
 			var err;
 
 			if (!this || !(this instanceof Error)) {
@@ -199,8 +246,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			err = new Error(this.message);
 			err.name = this.name;
 			this.stack = err.stack;
-			if (cons) {
-				console.error(this.message);
+			console.error(this.message);
+			if (isMeth(console, 'trace')) {
+				console.trace(arguments);
 			}
 		}
 
@@ -215,12 +263,25 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return dErr;
 	})();
 
-	/** map property names */
-	function mapNames(o, nmap) {
+	/** map property names of an object.
+
+		@param {object} o
+			object to be changed
+		@param {object} nmap
+			description object of property names to change in 'o'
+			"oldname": "newname"
+		@returns {object}
+			changed object
+		@example
+			var o = {a: 1, b: 42, c: 'hey'}; // before
+			o = mapNames(o, {a: 'one', c: 'greet'});
+			// o is now {one: 1, b: 42, greet: 'hey'}
+	*/
+	function mapNames (o, nmap) {
 		var pr;
 
 		for (pr in nmap) {
-			if (hasOP(o, pr)) {
+			if (hasOwn(o, pr)) {
 				o[nmap[pr]] = o[pr];
 				delete o[pr];
 			}
@@ -232,29 +293,29 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** these properties are processed ahead of any remaining properties to avoid
 		browser bugs (mainly IE of course). Retain order!
-		@type Array */
+		@type {Array} */
 	formProps = ['type', 'name', 'value', 'checked', 'selected'];
 
 	/** skip the following internal properties in createTree() property loop
-		@type Array */
+		@type {Array} */
 	skipProps = ['element', 'elrefs', 'clone', 'clonetop'];
 
 	/** multi-properties. These properties may appear multiple times inside a object
 		declaration, postfixed by an underscore and an unique identifier
-		@type Array */
+		@type {Array} */
 	multiProps = ['text', 'event', 'attribute', 'setif', 'html', 'child',
 		'comment', 'collect'];
 
 	/** save element reference if one of these props appears
-		@type Array */
+		@type {Array} */
 	saveProps = ['id', 'name'];
 
 	/** recursion counter for variable replacement depth in loop
-		@type number */
+		@type {number} */
 	loopdepth = 0;
 
 	/** attributes of 'boolean' type. value may be either empty or the attribute name
-		@type Array */
+		@type {Array} */
 	boolProps = [
 		'checked', 'compact', 'declare', 'defer', 'disabled', 'ismap', 'multiple',
 		'nohref', 'noresize', 'noshade', 'nowrap', 'readonly', 'selected'
@@ -262,8 +323,21 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* ==============  EVENTS  ================= */
 
-	/** handle events */
-	function setEvent(evtDcl) {
+	/**
+		attach event handler(s) to an element
+
+		@param {object} evtDcl
+			An object with event data
+		@param {HTMLElement} evtDcl.el
+			target element to attach element to
+		@param {object} evtDcl.val
+			object with function/function name and arguments
+		@param {string|Function} evtDcl.val.func
+			function reference or function name of the event handler
+		@param {Array} evtDcl.val.args
+			arguments to pass to event handler function
+	*/
+	function setEvent (evtDcl) {
 		var ix, fn,
 			o = evtDcl.val,
 			el = evtDcl.el;
@@ -273,65 +347,81 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			'arguments': 'args'
 		});
 
-		if (!isObj(o) || !hasOP(o, 'args')) {
-			throw new dError('Not a valid event declaration');
+		if (!isObj(o) || !hasOwn(o, 'args')) {
+			throw new dError('Not a valid event declaration', o);
 		}
 
-		if (Array.isArray(o.args)) {
-			/* call external, e.g. cross browser event handling
-				o.func is a function reference */
-			if (typeof o.func === 'function') {
-				ix = o.args.indexOf('#el#');
+		if (!Array.isArray(o.args)) {
+			throw new dError('Expected o.args to be array', o.args);
+		}
 
-				/* placeholder #el# not found, try to find #elp# */
-				if (ix < 0) {
-					ix = o.args.indexOf('#elp#');
+		/* call external, e.g. cross browser event handling
+			o.func is a function reference */
 
-					/* placeholder #elp# found */
-					if (ix >= 0) {
-						if (!el.parentNode) {
-							return;
-						}
-						el = el.parentNode;
-					}
-					else {
-						ix = o.args.indexOf('#elpp#');
-						/* placeholder #elpp# found */
-						if (ix >= 0) {
-							if (!el.parentNode || !el.parentNode.parentNode) {
-								return;
-							}
-							el = el.parentNode.parentNode;
-						}
-					}
-				}
-
-				if (ix < 0) {
-					/* insert element reference as first argument */
-					o.args.unshift(el);
-				}
-				else {
-					/* insert element reference at defined position */
-					o.args.splice(ix, 1, el);
-				}
-
-				/* call event set function */
-				o.func.apply(el, o.args);
-			}
+		/* o.func is not defined or a string */
+		if (typeof o.func !== 'function') {
 			/* call method "o.func" of el (defaults to "addEventListener") */
+			o.func = o.func || 'addEventListener';
+			fn = el[String(o.func)];
+			if (typeof fn !== 'function') {
+				throw new dError('eventhandler is not a function/method of element', o);
+			}
+			fn.apply(el, o.args);
+			return;
+		}
+
+		ix = o.args.indexOf('#el#');
+
+		/* placeholder #el# not found, try to find #elp# */
+		if (ix < 0) {
+			ix = o.args.indexOf('#elp#');
+
+			/* placeholder #elp# found */
+			if (ix >= 0) {
+				if (!el.parentNode) {
+					throw new dError('placeholder #elp# found, but element ' +
+						'has no parent node', evtDcl);
+				}
+				el = el.parentNode;
+			}
 			else {
-				/* o.func is not defined or a string */
-				o.func = o.func || 'addEventListener';
-				fn = el[String(o.func)];
-				if (typeof fn === 'function') {
-					fn.apply(el, o.args);
+				ix = o.args.indexOf('#elpp#');
+
+				/* placeholder #elpp# found */
+				if (ix >= 0) {
+					if (!el.parentNode || !el.parentNode.parentNode) {
+						throw new dError('placeholder #elpp# found, but element ' +
+							'has no grandparent node', evtDcl);
+					}
+					el = el.parentNode.parentNode;
 				}
 			}
 		}
+
+		/* none of the placeholders was found */
+		if (ix < 0) {
+			/* insert element reference as first argument */
+			o.args.unshift(el);
+		}
+
+		/* a placeholder was found */
+		else {
+			/* insert element reference at defined position */
+			o.args.splice(ix, 1, el);
+		}
+
+		/* call event set function */
+		o.func.apply(el, o.args);
 	}
 
-	/* add event(s) to stack */
-	function pushEvt(el, eo) {
+	/**
+		add event(s) to event stack
+
+		@param {HTMLElement} el
+
+		@param {Array} eo
+	*/
+	function pushEvt (el, eo) {
 		if (!Array.isArray(eo)) {
 			eo = [eo];
 		}
@@ -345,9 +435,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* ==============  PROPERTIES  ================= */
 
-	/** Set a property "prop" of el to "val".
-		Falls back to setAttribute if prop set fails */
-	function setProp(el, prop, val) {
+	/**
+		Set a property "prop" of el to "val".
+		Falls back to setAttribute if prop set fails
+	*/
+	function setProp (el, prop, val) {
 		var lcProp = prop.toLowerCase(),
 			rProp;
 
@@ -355,8 +447,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			/* throw error if data attribute starts with 'data-xml' or contains
 				uppercase letters or semicolon */
 			if (
-				lcProp !== prop ||  /* has uppercase */
-				lcProp.indexOf('data-xml') > -1 ||  /* starts with xml */
+				lcProp !== prop || /* has uppercase */
+				lcProp.indexOf('data-xml') > -1 || /* starts with xml */
 				lcProp.indexOf(';') > -1
 			) {
 				throw new dError('data-* property/attribute name may not start with "xml" or' +
@@ -404,9 +496,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			}
 		}
 
-		/* set a property, fallback to setAttribute if assignment fails.
+		/*
+			set a property, fallback to setAttribute if assignment fails.
 			some old browsers misbehave on "data-" attributes, even in bracket
-			notation */
+			notation
+		*/
 		try {
 			el[rProp] = val;
 			if (el[rProp] !== val && lcProp !== 'href') {
@@ -420,10 +514,12 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return el;
 	}
 
-	/* set property if condition is true */
-	function setPropIf(el, pobj) {
-		if (isObj(pobj) && hasOP(pobj, 'name') && hasOP(pobj, 'value')) {
-			if (hasOP(pobj, 'condition') && !!pobj.condition) {
+	/**
+		set a property if condition in declaration object is truthy
+	*/
+	function setPropIf (el, pobj) {
+		if (isObj(pobj) && hasOwn(pobj, 'name') && hasOwn(pobj, 'value')) {
+			if (hasOwn(pobj, 'condition') && Boolean(pobj.condition)) {
 				if (pobj.name !== 'child') {
 					setProp(el, pobj.name, pobj.value);
 				}
@@ -434,8 +530,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 	}
 
-	/** map property names. returns base name of 'multi' properties */
-	function mapMultiProps(p) {
+	/**
+		map property names. returns base name of 'multi' properties
+	*/
+	function mapMultiProps (p) {
 		var uscoPos = p.indexOf('_'),
 			base;
 
@@ -450,13 +548,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* ==============  MISC  ================= */
 
-	/** set element styles */
-	function setStyles(el, sty) {
+	/**
+		set element styles
+	*/
+	function setStyles (el, sty) {
 		if (Array.isArray(sty)) {
 			sty = sty.join(';');
 		}
-		/*  Prefer element.style.cssText if available. older IE (up to 7 AFAIK)
-			sometimes might have problems when using "el.setAttribute('style', ...)" */
+
+		/* Prefer element.style.cssText if available. */
 		if (el.style.cssText !== undefined) {
 			el.style.cssText = sty;
 		}
@@ -466,17 +566,17 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return el;
 	}
 
-	/** create HTML comment node
+	/**
+		create HTML comment node
 
 		If document.createComment() is not available, this function adds comment nodes
 		to node elements only
 	*/
-	function addComment(el, comm) {
+	function addComment (el, comm) {
 		if (Array.isArray(comm)) {
 			comm.forEach(addComment.bind(null, el));
 		}
 		else {
-			comm = ' ' + comm + ' ';
 			if (isMeth(document, 'createComment')) { /* node element and fragment */
 				el.appendChild(document.createComment(comm));
 			}
@@ -486,8 +586,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 	}
 
-	/** push function reference from init property and element reference to init stack */
-	function pushInit(el, val) {
+	/**
+		push function reference from init property and element reference to init stack
+	*/
+	function pushInit (el, val) {
 		if (typeof val === 'function') {
 			initStack.push({
 				el: el,
@@ -496,25 +598,28 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 	}
 
-	/** call all init functions in stack
+	/**
+		call functions from init stack
 		'this' is a reference to the created element tree
 	*/
-	function callInit(fobj) {
+	function callInit (fobj) {
 		fobj.func.call(fobj.el, this);
 	}
 
 	/* ==============  LOOPS  ================= */
 
-	/* loop element creation and replace placeholders */
-	function loopDecl(s) {
+	/**
+		loop element creation and replace placeholders
+	*/
+	function loopDecl (s) {
 		var step = 1,
 			start = 0,
 			cnt = 1,
 			parr = ['chk', 'sel'],
-			isdeep = hasOP(s, 'loopdeep'),
+			isdeep = hasOwn(s, 'loopdeep'),
 			frg, i, o, lprop, lobj, lcnt;
 
-		if (hasOP(s, 'loop') && isdeep) {
+		if (hasOwn(s, 'loop') && isdeep) {
 			throw new dError('You may use only one of "loop" OR "loopdeep", not both.');
 		}
 		lprop = (isdeep) ? 'loopdeep' : 'loop';
@@ -522,37 +627,38 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		delete s[lprop];
 
 		/* check if lobj is either a valid object or a numeric value */
-		if (isObj(lobj) && hasOP(lobj, 'count') && !isNaN(lobj.count)) {
+		if (isObj(lobj) && hasOwn(lobj, 'count') && !isNaN(lobj.count)) {
 
 			/* validate loop values count, step and start */
 			cnt = Number(lobj.count);
-			if (hasOP(lobj, 'step') && !isNaN(lobj.step)) {
+			if (hasOwn(lobj, 'step') && !isNaN(lobj.step)) {
 				step = Number(lobj.step);
 				if (step === 0) {
 					step = 1;
 				}
 			}
-			if (hasOP(lobj, 'start') && !isNaN(lobj.start)) {
+			if (hasOwn(lobj, 'start') && !isNaN(lobj.start)) {
 				start = Number(lobj.start);
 			}
 
 			/* validate 'values' array (for "v" placeholder) */
-			if (hasOP(lobj, 'values')) {
+			if (hasOwn(lobj, 'values')) {
 				if (!Array.isArray(lobj.values)) {
 					throw new dError('loop property "values" has to be an array');
 				}
 
-				if (!hasOP(lobj, 'valuesrepeat') && lobj.values.length < lobj.count) {
+				if (!hasOwn(lobj, 'valuesrepeat') && lobj.values.length < lobj.count) {
 					throw new dError(
 						'"values" array has less elements (' + lobj.values.length +
-						') than loop count (' + lobj.count + ')'
+						') than loop count (' + lobj.count + ').\nAdd more items to' +
+						' the array or set "valuesrepeat" mode.'
 					);
 				}
 			}
 
 			/* validate chk/sel properties (checked or selected elements) */
 			parr.forEach(function (item) {
-				if (hasOP(lobj, item)) {
+				if (hasOwn(lobj, item)) {
 					if (!Array.isArray(lobj[item]) && isNaN(lobj[item])) {
 						throw new dError(
 							'type of loop property "' + item + '" must be array or number'
@@ -576,46 +682,68 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			}
 
 			/* replace placeholders with current values */
-			o = replaceCounter(s, i, lcnt, isdeep, lobj);
+			o = replaceCounter({
+				declaration: s,
+				value: i,
+				counter: lcnt,
+				recursive: isdeep,
+				config: lobj
+			});
 
 			/* set checked/selected if one of the properties from "parr" exists */
-			if (parr.some(hasOP.bind(null, lobj))) {
-				o = setCSFlags(o, lobj, lcnt, parr);
+			if (parr.some(hasOwn.bind(null, lobj))) {
+				o = setCSFlags({
+					declaration: o,
+					config: lobj,
+					loopcount: lcnt,
+					properties: parr
+				});
 			}
 
 			/* create element tree and append to fragment */
 			appendTree.call(frg, o);
 			lcnt++;
 		}
-		//s[lprop] = lobj;
+		// TEMP: wait ... why did I deactivate this line? Is it needed?
+		// s[lprop] = lobj;
 		return frg;
 	}
 
 	/**
 		find placeholders and replace them with committed values
 
-		@param decl   {object}    dElement declaration object
-		@param i      {number}    calculated value
-		@param c      {integer}   loop counter
-		@param isdeep {boolean}   recursive replace in subdeclarations
-		@param lobj   {object}    loop configuration object
-		@returns      {object}    declaration with replaced values
+		@param   {object}  argObj
+			object with required values
+		@param   {object}  argObj.declaration
+			dElement declaration object
+		@param   {number}  argObj.value
+			calculated value
+		@param   {number} argObj.counter
+			loop counter
+		@param   {boolean} argObj.recursive
+			recursive replace in subdeclarations
+		@param   {object}  argObj.config
+			loop configuration object
+		@returns {object}
+			declaration with replaced values
 	*/
-	function replaceCounter(decl, i, c, isdeep, lobj) {
-		var o, phreg, p, cc, v;
-
-		/* create copy of declaration */
-		o = oCpy(decl);
+	function replaceCounter (argObj) {
+		var i = argObj.value,
+			c = argObj.counter,
+			isdeep = argObj.recursive,
+			lobj = argObj.config,
+			o = oCpy(argObj.declaration), /* create copy of declaration */
+			phreg, p, cc, v;
 
 		/* RegExp to match all parts of "n" and "c" placeholders */
-		phreg = /\!\!(?:(\-?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
-				/*  !!  |   mul number   |mul sign| nc | add/sub number  |  !!  */
-				/*      |      [1]       |        | [2]|       [3]       |      */
+		phreg = /\!\!(?:([+-]?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
+				/*  !!  |   mul number     |mul sign| nc | add/sub number  |  !!  */
+				/*      |      [1]         |        | [2]|      [3]        |      */
 
 		/* handle array index if "values" propery is an array */
-		if (hasOP(lobj, 'values')) {
+		if (hasOwn(lobj, 'values')) {
 			v = lobj.values;
-			cc = (hasOP(lobj, 'valuesrepeat'))
+			cc = (hasOwn(lobj, 'valuesrepeat'))
 				? c % v.length
 				: c;
 		}
@@ -634,7 +762,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				/* replace each "n" or "c" placeholder with its calculated value */
 				o[p] = o[p].replace(
 					phreg,
-					loopReplace.bind({c: c, i: i})
+					loopReplace.bind(null, c, i)
 				);
 			}
 			else if (
@@ -645,25 +773,49 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				*/
 				p === 'child' &&
 				isObj(o.child) &&
-				!hasOP(o.child, 'loop') &&
-				!hasOP(o.child, 'loopdeep') &&
-				!hasOP(o.child, 'loopstop') &&
+				!hasOwn(o.child, 'loop') &&
+				!hasOwn(o.child, 'loopdeep') &&
+				!hasOwn(o.child, 'loopstop') &&
 				(isdeep || loopdepth < 1)
 			) {
 				loopdepth++; /* increase depth counter */
-				o.child = replaceCounter(o.child, i, c, isdeep, lobj);
+				o.child = replaceCounter({
+					declaration: o.child,
+					value: i,
+					counter: c,
+					recursive: isdeep,
+					config: lobj
+				});
 				loopdepth--;
 			}
 		}
 		return o;
 	}
 
-	/* callback for op.replace in function replaceCounter:
-		calculate value of placeholder and replace it */
-	function loopReplace(mch, mul, ty, add) {
-		var cv = (ty === 'c')
-			? this.c
-			: this.i;
+	/**
+		callback for op.replace in function replaceCounter:
+		calculate value of placeholder and replace it.
+
+		@param {number} cnt
+			loop counter
+		@param {number} val
+			loop value
+		@param {string} matched
+			matched string (not used)
+		@param {string} mul
+			multiplier (can include leading "+" or "-")
+		@param {string} ptype
+			placeholder type (n or c for loop value or counter)
+		@param {string} add
+			sum to add (can include leading "+" or "-")
+		@return {number}
+			final calculated value for placeholder replacement
+	*/ /* eslint-disable-next-line max-params */
+	function loopReplace (cnt, val, matched, mul, ptype, add) {
+		/* determine type of value */
+		var cv = (ptype.toLowerCase() === 'c')
+			? cnt /* loop counter */
+			: val; /* calculated value */
 
 		mul = Number(mul);
 		if (!isNaN(mul)) {
@@ -678,21 +830,31 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/**
-		set checked or selected property
-		@param o    {object}    original dElement declaration object
-		@param lobj {object}    loop configuration object
-		@param lc   {Integer}   loop counter
-		@param arr  {Array}     array of property names to process
-		@returns    {object}    declaration object with replaced values
+		set checked or selected property in declaration
+
+		@param {object} argObj.declaration
+			original dElement declaration object
+		@param {object} argObj.config
+			loop configuration object
+		@param {number} argObj.loopcount
+			loop counter
+		@param {array}  argObj.properties
+			array of property names to process
+		@returns    {object}
+			declaration object with replaced values
 	*/
-	function setCSFlags(o, lobj, lc, arr) {
-		var i = arr.length,
+	function setCSFlags (argObj) {
+		var o = argObj.declaration,
+			lobj = argObj.config,
+			lc = argObj.loopcount,
+			arr = argObj.properties,
+			i = arr.length,
 			c = lc + 1,
 			item, prp;
 
 		while (i--) {
 			item = arr[i];
-			if (hasOP(lobj, item) && (
+			if (hasOwn(lobj, item) && (
 				c === lobj[item] ||
 				(Array.isArray(lobj[item]) && lobj[item].indexOf(c) > -1)
 			)) {
@@ -705,12 +867,14 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* ==============  ELEMENT REFERENCES  ================= */
 
-	/** add current element reference to collection */
-	function collectElRef(sc, el) {
+	/**
+		add current element reference to collection
+	*/
+	function collectElRef (sc, el) {
 		if (Array.isArray(sc)) {
 			sc.push(el);
 		}
-		else if (isObj(sc) && hasOP(sc, 'obj') && hasOP(sc, 'name') && isObj(sc.obj)) {
+		else if (isObj(sc) && hasOwn(sc, 'obj') && hasOwn(sc, 'name') && isObj(sc.obj)) {
 			if (sc.obj[sc.name] === undefined) {
 				sc.obj[sc.name] = el;
 			}
@@ -726,8 +890,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 	}
 
-	/** save references of elements with name or id property */
-	function saveRefs(rObj, sdata) {
+	/**
+		save references of elements with name or id property
+	*/
+	function saveRefs (rObj, sdata) {
 		var pr = sdata.s[sdata.p];
 
 		if (sdata.lp === 'id') {
@@ -746,16 +912,19 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* ==============  ATTRIBUTES  ================= */
 
-	/** replace special property names */
-	function replaceAttrName(atn) {
+	/**
+		replace special property names
+	*/
+	function replaceAttrName (atn) {
 		var lcAtt = atn.toLowerCase();
 
-		return (lcAtt in K345.attrNames)
-			? K345.attrNames[lcAtt]
+		return (lcAtt in attrNames)
+			? attrNames[lcAtt]
 			: camelCase(atn);
 	}
 
-	/** set attributes with setAttribute(). will be used only when forced with property
+	/**
+		set attributes with setAttribute(). will be used only when enforced by property
 		attr|attrib|attribute or with certain problematic properties
 
 		value has to be either
@@ -763,16 +932,16 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				e.g.  attribute: {name: 'foo', value: 'bar'}
 			- an array with objects as described above
 	*/
-	function setAttribs(el, att) {
+	function setAttribs (el, att) {
 		if (Array.isArray(att)) {
 			att.forEach(setAttribs.bind(null, el));
 		}
 		else if (
-			isNode(el) && isObj(att) && hasOP(att, 'name') &&
-			hasOP(att, 'value') && isStr(att.name)
+			isNode(el) && isObj(att) && hasOwn(att, 'name') &&
+			hasOwn(att, 'value') && isStr(att.name)
 		) {
 			if (att.name.toLowerCase() === 'style') {
-				/* setAttribute with "style" fails in some browsers, handle this*/
+				/* setAttribute with "style" fails in some browsers, handle it */
 				setStyles(el, att.value);
 			}
 			else {
@@ -784,7 +953,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/* ==============  PARSE EXTENDED SYNTAX  ================= */
 
-	/* parseElemStr() */ /*eslint-disable no-multi-spaces */
+	/* parseElemStr() */
 	parseElemStr = (function () {
 		var ETX = '\x03', /* 0x03 (ETX, end of text) */
 			US  = '\x1F', /* 0x1F (US, unit separator) */
@@ -810,31 +979,42 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		modeChars[MODE_NAME]    = {attrName: 'name'};
 		modeChars[MODE_TYPE]    = {attrName: 'type'};
 		modeChars[MODE_VALUE]   = {attrName: 'value', stop: false};
-		/*eslint-enable no-multi-spaces */
+		/* eslint-enable no-multi-spaces */
 
 		for (pr in modeChars) {
-			if (hasOP(modeChars, pr)) {
+			if (hasOwn(modeChars, pr)) {
 				moc += pr;
 			}
 		}
 
-		/* mode and illegal chars.
+		/** mode and illegal chars.
 			This is not a RegExp; multichar sequences like \s \b \w will not work  */
 		stopChars = moc + US + WSP + '%<>*\'"/|\\?^!§&()[]{}+:,;';
 
-		/* wrapper for parser errors */
-		function pError(str) {
+		/** wrapper for parser errors */
+		function pError (str) {
 			throw new dError('Parser error: ' + str);
 		}
 
-		/* callback for [].filter: remove duplicate elements in array */
-		function removeDupes(cn, ix, arr) {
+		/**
+		* callback for [].filter in joinClassNames: detect duplicate elements in array
+		*
+		* @param {$_TYPE_$} cn
+		*
+		* @param {$_TYPE_$} ix
+		*
+		* @param {$_TYPE_$} arr
+		*
+		* @returns {$_TYPE_$}
+		*
+		*/
+		function removeDupes (cn, ix, arr) {
 			return ix === arr.indexOf(cn);
 		}
 
-		/* */
-		function isStopMode(mo) {
-			return !mo || !hasOP(modeChars, mo) || !hasOP(modeChars[mo], 'stop') ||
+		/** */
+		function isStopMode (mo) {
+			return !mo || !hasOwn(modeChars, mo) || !hasOwn(modeChars[mo], 'stop') ||
 				modeChars[mo].stop !== false;
 		}
 
@@ -845,8 +1025,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			@param {Array}     cArr   array with class names from parse
 			@returns {string}         space separated class names as string
 		*/
-		function joinClassNames(dcl, cArr) {
-			if (hasOP(dcl, 'className')) {
+		function joinClassNames (dcl, cArr) {
+			if (hasOwn(dcl, 'className')) {
 				cArr = cArr.concat(dcl.className.split(/\s+/));
 			}
 			return (cArr.length > 1)
@@ -878,7 +1058,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* init counters */
 			for (mcc in modeChars) {
-				if (hasOP(modeChars, mcc)) {
+				if (hasOwn(modeChars, mcc)) {
 					cnt[mcc] = 0;
 				}
 			}
@@ -890,10 +1070,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* if first char is in modeChars, "str" doesn't start with element name */
 			ch = str.charAt(0);
-			if (hasOP(modeChars, ch)) {
+			if (hasOwn(modeChars, ch)) {
 				mode = ch;
 				i++;
-				if (!((/\$[a-z][a-z1-6]?/i).test(str))) { /* tag name not defined*/
+				if (!((/\$[a-z][a-z1-6]?/i).test(str))) { /* tag name not defined */
 					pError('extended syntax without element node name definition\n"' +
 						str + '"');
 				}
@@ -948,7 +1128,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 					break;
 				default:
 					/* find matching attribute name, create property and set its value */
-					if (hasOP(modeChars, mode) && hasOP(modeChars[mode], 'attrName')) {
+					if (hasOwn(modeChars, mode) && hasOwn(modeChars[mode], 'attrName')) {
 						dcl[modeChars[mode].attrName] = part;
 					}
 					else {
@@ -959,17 +1139,17 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				part = '';
 
 				/* set new mode based on stop char or throw Error on illegal char */
-				if (hasOP(modeChars, ch)) {
+				if (hasOwn(modeChars, ch)) {
 					mcc = modeChars[ch];
 
 					/* count the usage of each attribute declaration. if 'unique' is set,
 						the count may not exceed 1 */
 					cnt[ch]++;
-					if (cnt[ch] > 1 && (!hasOP(mcc, 'unique') || mcc.unique !== false)) {
+					if (cnt[ch] > 1 && (!hasOwn(mcc, 'unique') || mcc.unique !== false)) {
 						if (ch === MODE_TAGNAME) {
 							pr = ' tag name';
 						}
-						else if (hasOP(mcc, 'attrName')) {
+						else if (hasOwn(mcc, 'attrName')) {
 							pr = mcc.attrName;
 						}
 						else {
@@ -980,7 +1160,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 					}
 
 					mode = ch;
-					stop = !hasOP(mcc, 'stop') || !!mcc.stop;
+					stop = !hasOwn(mcc, 'stop') || Boolean(mcc.stop);
 				}
 				else {
 					pError('Illegal char: "' + ch + '" (' + ch.charCodeAt(0) +
@@ -1001,7 +1181,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/* ===================  NODE TREE FUNCTIONS ====================== */
 
 	/** convert "txt" to DOM text node */
-	function textNode(txt) {
+	function textNode (txt) {
 		if (Array.isArray(txt)) {
 			return document.createTextNode(txt.join(''));
 		}
@@ -1010,8 +1190,14 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			: document.createTextNode(txt);
 	}
 
-	/** convert HTML string (as used with innerHTML) to DOM node tree.
-		@function */
+	/**
+		convert HTML string (as used with innerHTML) to DOM node tree.
+		@function
+		@param {string} hstr
+			(hopefully valid) HTML string
+		@returns {HTMLElement|DocumentFragment}
+			created DOM Element/Fragment with child nodes
+	*/
 	strToNodes = (function () {
 		var el = document.createElement('template'),
 			isTmpl = 'content' in el,
@@ -1026,16 +1212,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		else {
 			/* if HTML element 'template' is not available, determine best matching
 				parent element or use 'div' otherwise */
-			createParent = (function (str) {
+			createParent = (function (parlist, str) {
 				var elp = 'div',
-					m;
+					m = str.match(/\<\s*([a-z][a-z1-6]*)/i);
 
-				m = str.match(/\<\s*([a-z][a-z1-6]*)/i);
-				if (m && m.length > 1 && hasOP(this, m[1])) {
-					elp = this[m[1]];
+				if (m && m.length > 1 && hasOwn(parlist, m[1])) {
+					elp = parlist[m[1]];
 				}
 				return document.createElement(elp);
-			}).bind({
+			}).bind(null, {
 				/* define parent elements for some element types. */
 				tr: 'tbody', tbody: 'table', thead: 'table', th: 'tr', td: 'tr',
 				tfoot: 'table', caption: 'table', 'option': 'select', li: 'ul',
@@ -1049,7 +1234,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				txt = '',
 				frg, fc;
 
-			/* Sadly, applying innerHTML directly to an fragment doesn't work. Using a
+			/* Applying innerHTML directly to an fragment doesn't work. Using a
 				dummy element and then moving it's child nodes to the fragment does the
 				trick.
 			*/
@@ -1057,7 +1242,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				d.innerHTML = hstr;
 
 				/* if 'el' is a <template> element, it's 'content' property already
-					references a documentFragment, so we're done */
+					references a documentFragment and we're done */
 				if (isTmpl) {
 					frg = d.content;
 				}
@@ -1070,7 +1255,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				}
 			}
 			catch (ex) {
-				/*	assigning "str" with innerHTML will fail if content-type of document
+				/* assigning "str" with innerHTML will fail if content-type of document
 					is application/xhtml+xml AND either named entities other than &gt, &lt,
 					&amp, &quot, &apos are used OR if "str" contains certain illegal HTML
 				*/
@@ -1090,12 +1275,21 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		};
 	})();
 
-	/** appends elements, DOM tree or HTML written as string to a given parent
-		node element. */
-	function addNodes(el, item) {
+	/** appends elements, DOM tree or HTML string to a given parent
+		node element.
+
+		@param {HTMLElement} el
+		@param {*} item
+		@returns {HTMLElement}
+		@throws {dError}
+			if type of item to be added is not allowed
+	*/
+	function addNodes (el, item) {
 		if (isAppendable(item)) {
 			el.appendChild(item);
 		}
+
+		/* handle HTML string */
 		else if (isStr(item)) {
 			if (item === '') { return el; }
 			if (isEl(el)) { /* a HTML element */
@@ -1116,8 +1310,16 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** create DOM tree and append to object
 		expects parent element as 'this', e.g. by calling it:
-		appendTree.call(el, dcl) */
-	function appendTree(dcl) {
+		appendTree.call(el, dcl)
+
+		@param {object} dcl
+			a dElement declaration object
+		@returns {HTMLElement}
+			created element or element array
+		@this {HTMLElement}
+			Element to append created element(s) to.
+	*/
+	function appendTree (dcl) {
 		var s = createTree(dcl);
 
 		if (s) {
@@ -1126,8 +1328,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return s;
 	}
 
-	/** append child nodes */
-	function appendChildNodes(el, sp) {
+	/** append child nodes to an element.
+
+		@param {HTMLElement} el
+			root element to append created content to
+		@param {*} sp
+			content to append. Can be an element(tree), a dElement declaration object,
+			a text or an array of all of the former.
+	*/
+	function appendChildNodes (el, sp) {
 		if (Array.isArray(sp)) {
 			sp.forEach(appendChildNodes.bind(null, el));
 		}
@@ -1142,12 +1351,19 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 	}
 
-	/** clone a node(tree) or a declaration */
-	function cloneObject(s) {
-		var scl, el,
-			clo = hasOP(s, 'clone');
+	/**
+		clone a node(tree) or a declaration^
 
-		if (clo && hasOP(s, 'clonetop')) {
+		@param {object} s
+			dElement declaration object or node tree
+		@throws dError
+			if cloning failed
+	*/
+	function cloneObject (s) {
+		var scl, el,
+			clo = hasOwn(s, 'clone');
+
+		if (clo && hasOwn(s, 'clonetop')) {
 			throw new dError('only one of "clone" or "clonetop" may be used.');
 		}
 		scl = s.clone || s.clonetop;
@@ -1163,8 +1379,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return el;
 	}
 
-	/** test for declaration of child nodes for an empty content type element */
-	function testVoidAppend(s) {
+	/**
+		test for declaration of children for an empty content type element
+
+		@param {object} s
+			dElement declaration object
+		@throws dError
+			if a empty element has children
+	*/
+	function testVoidAppend (s) {
 		var pp = ['text', 'html', 'child'],
 			prop, lcProp;
 
@@ -1179,15 +1402,18 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		/* eslint-enable guard-for-in */
 	}
 
-	/** if a declaration "s" doesn't contain a property "element", then there has to be
+	/**
+		if a declaration "s" does not contain a property "element", then there MUST be
 		a property "html", "text" or "comment".
 
-		@param    s       declaration object
-		@returns          document fragment containing nodes/node tree
-		@throws   dError  if neither of the required properties are declared
-		@private
+		@param {object} s
+			declaration object
+		@returns {DocumentFragment}
+			document fragment containing nodes/node tree
+		@throws dError
+			if neither of the required properties are declared
 	*/
-	function noElementDeclaration(s) {
+	function noElementDeclaration (s) {
 		var frg = document.createDocumentFragment(),
 			c = 0,
 			prop, lcProp;
@@ -1217,7 +1443,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		if (!frg.hasChildNodes() && c !== 1) {
 			throw new dError(
 				'Every (sub)declaration object requires at least one of the following ' +
-				'properties: "element", "text", "clone", "clonetop", "comment" or "html".'
+				'properties:\n"element", "text", "clone", "clonetop", "comment" or "html".'
 			);
 		}
 
@@ -1225,8 +1451,17 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return frg;
 	}
 
-	/** walk declaration object (recursive) and create element tree */
-	function createTree(s) {
+	/**
+		process declaration object (recursive) and create element tree
+
+		@param {object} s
+			declaration object
+		@returns {HTMLElement|DocumentFragment|Text|Comment}
+			created node(s)/node tree
+		@throws dError
+			in case of an unrecoverable error.
+	*/
+	function createTree (s) {
 		var frg, lcProp, newEl, prop, sp;
 
 		/* array of element declarations without common parent element */
@@ -1247,12 +1482,12 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 
 		/* return cloned node */
-		if (hasOP(s, 'clone') || hasOP(s, 'clonetop')) {
+		if (hasOwn(s, 'clone') || hasOwn(s, 'clonetop')) {
 			return cloneObject(s);
 		}
 
 		/* loop: duplicate elements n times and replace placeholder */
-		if (hasOP(s, 'loop') || hasOP(s, 'loopdeep')) {
+		if (hasOwn(s, 'loop') || hasOwn(s, 'loopdeep')) {
 			return loopDecl(s);
 		}
 
@@ -1265,7 +1500,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		});
 
 		/* stop processing if property 'condition' exist and it's value is falsy */
-		if (hasOP(s, 'condition') && !s.condition) {
+		if (hasOwn(s, 'condition') && !s.condition) {
 			return null;
 		}
 
@@ -1284,7 +1519,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			one of either 'text', 'html', 'comment', 'clone', 'clonetop' MUST be defined.
 			'clone' and 'clonetop' are processed above; this part takes care of
 			'html', 'text', 'comment'. */
-		if (!hasOP(s, 'element')) {
+		if (!hasOwn(s, 'element')) {
 			return noElementDeclaration(s);
 		}
 
@@ -1299,7 +1534,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 
 		/* test for declaration of child nodes for empty content type elements */
-		if (K345.voidElements.indexOf(s.element) > -1) {
+		if (voidElems.indexOf(s.element) > -1) {
 			testVoidAppend(s);
 		}
 
@@ -1312,7 +1547,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		*/
 		newEl = document.createElement(s.element);
 		formProps.forEach(function (pr) {
-			if (hasOP(s, pr)) {
+			if (hasOwn(s, pr)) {
 				setProp(newEl, pr, s[pr]);
 				delete s[pr];
 			}
@@ -1393,6 +1628,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* init functions */
 			case 'init':
+			case 'initnorun':
 				pushInit(newEl, sp);
 				break;
 
@@ -1406,32 +1642,31 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return newEl;
 	}
 
-	/**#@- */
-
 	/* ==============  dElement() & dAppend()  ================= */
+	/**
+		dElement: create node tree from declaration object
 
-	/** create node tree from declaration
-		@param   {object} decl
-			element declaration
-		@returns {Element|null}
+		@param {object} decl
+			element declaration object
+		@returns {HTMLElement|DocumentFragment|null}
 			node tree or fragment or null
 	*/
 	K345.dElement = function (decl) {
 		var dtree;
 
 		if (!Array.isArray(decl) && !isObj(decl)) {
-			throw new dError('Parameter has been omitted or is not an object/array');
+			throw new dError('Parameter has been omitted or value is not an object/array');
 		}
 		/** collect events
-			@type Array */
+			@type {Array} */
 		eventStack = [];
 
 		/** collect init functions
-			@type Array */
+			@type {Array} */
 		initStack = [];
 
 		/** collect element references
-			@type Object */
+			@type {object} */
 		refs = null;
 
 		dtree = createTree(decl);
@@ -1442,47 +1677,61 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		return dtree || null;
 	};
 
-	/** dAppend: create node tree and append it to an existing element
+	/**
+		dAppend: create node tree and append it to an existing element
 
-		@param {Element|string} elem
+		@param {HTMLElement|string} elem
 			element reference or id as string
 
-		@param {object} dcl
+		@param {object} decl
 			element declaration object (see dElement)
 
-		@param {number} [mode=K345.DAPPEND_APPEND]
-			possible values for mode:<br>
-		'beforeEnd' or<br>
-		K345.DAPPEND_LAST or<br>
-		K345.DAPPEND_APPEND  -> append to elem (default)<br>
-		'beforeBegin' or<br>
-		K345.DAPPEND_BEFORE  -> insert before elem<br>
-		'afterEnd' or<br>
-		K345.DAPPEND_AFTER   -> insert after elem<br>
-		'replaceElement' or<br>
-		K345.DAPPEND_REPLACE -> replace existing element<br>
-		'afterBegin' or<br>
-		K345.DAPPEND_FIRST   -> append as first child of element<br>
-		'wipeContent' or<br>
-		K345.DAPPEND_WIPE    -> wipe existing child elements and append as child of
-		element<br><br>
+		@param {string|number} [mode=K345.DAPPEND_APPEND]
+			set append mode
 
-		mode values may *not* be combined!
+		<pre>
+		possible values for mode:
 
-		@returns {object|null}
+		'beforeEnd' or
+		K345.DAPPEND_LAST or
+		K345.DAPPEND_APPEND  => append to 'elem' (default)
+
+		'beforeBegin' or
+		K345.DAPPEND_BEFORE  => insert before 'elem'
+
+		'afterEnd' or
+		K345.DAPPEND_AFTER   => insert after 'elem'
+
+		'replaceElement' or
+		K345.DAPPEND_REPLACE => replace existing element
+
+		'afterBegin' or
+		K345.DAPPEND_FIRST   => append as first child of 'elem'
+
+		'wipeContent' or
+		K345.DAPPEND_WIPE    => wipe existing child elements and append as child of
+		'elem'
+
+		mode values MAY NOT be combined!</pre>
+
+		@returns {HTMLElement|DocumentFragment|null}
 			node tree or null
 
 	*/
-	K345.dAppend = function (elem, dcl, mode) {
+	K345.dAppend = function (elem, decl, mode) {
 		var nodes = null,
 			elc;
 
 		if (isStr(elem)) {
-			elem = document.getElementById(elem);
+			/* if one of the regex test chars is found in "elem" string, it's not
+				a id string. might be a css like selector */
+			elem = (dAppend_regex.test(elem))
+				? document.querySelector(elem)
+				: document.getElementById(elem);
 		}
 
 		if (isNode(elem)) {
-			nodes = K345.dElement(dcl);
+			nodes = K345.dElement(decl);
 			if (!nodes) {
 				return null;
 			}
@@ -1514,7 +1763,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				while ((elc = elem.lastChild)) {
 					elem.removeChild(elc);
 				}
-				/*jsl:fallthru*/ /* eslint-disable-next-line no-fallthrough */
+				/* eslint-disable-next-line no-fallthrough */
 			case 'beforeEnd':
 			case K345.DAPPEND_APPEND:
 			case K345.DAPPEND_LAST:
@@ -1528,53 +1777,46 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/** append as last child of element (default).
 		mode flag for {@link K345.dAppend()}
-		@type Constant
+		@constant
 	*/
 	K345.DAPPEND_APPEND = 0;
 
 	/** append as last child of element (default).
 		mode flag for {@link K345.dAppend()}
-		@type Constant
+		@constant
 	*/
 	K345.DAPPEND_LAST = 0;
 
 	/** insert before element.
 		mode flag for {@link K345.dAppend()}
-		@type Constant
+		@constant
 	*/
 	K345.DAPPEND_BEFORE = 1;
 
 	/** insert after element.
 		mode flag for {@link K345.dAppend()}
-		@type Constant
+		@constant
 	*/
 	K345.DAPPEND_AFTER = 2;
 
 	/** replace element.
 		mode flag for {@link K345.dAppend()}
-		@type Constant
+		@constant
 	*/
 	K345.DAPPEND_REPLACE = 3;
 
 	/** append as first child.
 		mode flag for {@link K345.dAppend()}
-		@type Constant
+		@constant
 	*/
 	K345.DAPPEND_FIRST = 4;
 
 	/** wipe all existing child nodes and append.
 		mode flag for {@link K345.dAppend()}
-		@type Constant
+		@constant
 	*/
 	K345.DAPPEND_WIPE = 5;
-})();
 
-/* @@CODEEND DELEM */
-
-/* %% devel on %% */
-if ('registerScript' in K345) {
-	K345.registerScript('delement');
-}
-/* %% devel off %% */
+})(K345.attrNames, K345.voidElements);
 
 /* EOF */
