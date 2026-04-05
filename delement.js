@@ -1,13 +1,14 @@
 /*!
-	delement.js ö
-	K345 2006-2022
+	delement.js
+	K345 2006-2022, 2025-2026 ö
 
 	dElement() http://js.knrs.de
-	No recent or fancy programming styles or es6+ versions will be used for now.
+
 */
+'use strict';
 
 /* %% devel on %% */
-	/* eslint-disable */
+	/* eslint-disable -- internal stuff */
 	/*global K345, document*/
 	/** @namespace */
 	var K345 = K345 || {};
@@ -21,7 +22,7 @@
 
 /** conversion table for HTML-attribute names
 	@type {object} */
-K345.attrNames = K345.attrNames || {
+K345.attributeNames = K345.attrNames || {
 	acceptcharset: 'acceptCharset', accesskey: 'accessKey', alink: 'aLink',
 	bgcolor: 'bgColor', cellindex: 'cellIndex', cellpadding: 'cellPadding',
 	cellspacing: 'cellSpacing', charoff: 'chOff', 'class': 'className',
@@ -37,11 +38,12 @@ K345.attrNames = K345.attrNames || {
 
 /** names of HTML elements with content type "void"
 	@type {Array} */
-K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col',
+K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col',
 	'command', 'embed', 'frame', 'hr', 'img', 'input', 'isindex', 'keygen', 'link', 'meta',
 	'param', 'source', 'track', 'wbr'];
 
 /* @@CODESTART DELEM "Javascript" */
+
 /**
 	dElement / dAppend
 	requires Array.isArray()
@@ -53,13 +55,11 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	requires K345.attrNames
 	requires K345.voidElements
 */
-(function (attrNames, voidElems) {
-	''; 'use strict';
-
-		/* internal vars */
-	var _slice = Array.prototype.slice,
-		dAppend_regex = (/[#\.=\[\]:\s]+/),
-		eventStack, initStack, refs, loopdepth,
+(function (glob, attrNames, voidElems) {
+	/* internal vars */
+	var dAppend_regex = (/[#\.=\[\]:\s]+/),
+		isInLoop = false,
+		eventStack, initStack, refs, loopdepth, ldec, extcount,
 
 		/* predefined data */
 		skipProps, saveProps, formProps, boolProps, multiProps,
@@ -78,19 +78,17 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			true, if 'prop' is a native property of 'obj'
 		@function
 	*/
-	hasOwn = (function () {
-		return (isMeth(Object, 'hasOwn'))
+	hasOwn = (isMeth(Object, 'hasOwn'))
 
-			/* browsers supporting Object.hasOwn() */
-			? function (obj, prop) {
-				return Object.hasOwn(obj, prop);
-			}
+		/* browsers supporting Object.hasOwn() */
+		? function (obj, prop) {
+			return Object.hasOwn(obj, prop);
+		}
 
-			/* fallback for browsers without Object.hasOwn support */
-			: function (obj, prop) {
-				return Object.prototype.hasOwnProperty.call(obj, prop);
-			};
-	})();
+		/* fallback for browsers without Object.hasOwn support */
+		: function (obj, prop) {
+			return Object.prototype.hasOwnProperty.call(obj, prop);
+		};
 
 	/** test if el is a nodeElement and has a specific nodeType
 		@param {HTMLElement} el
@@ -158,8 +156,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	]);
 
 	/**
-		remove dash(es) (-) from a string and convert the following char to uppercase
-		( no-text => noText  it-is-fine => itIsFine)
+		remove dash(es) (-), dots (.) and underscores (_) from a string and convert the
+		following char to uppercase
+		( no-text => noText  it-is_fine => itIsFine)
 
 		@param {string} str
 			original string
@@ -167,14 +166,14 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			modified string
 	*/
 	function camelCase (str) {
-		return str.replace(/\-./g, function (s) {
+		return str.replace(/[-_\.]./g, function (s) {
 			return s.substr(1).toUpperCase();
 		});
 	}
 
 	/**
 		test: is item a string?
-		@param {*} item
+		@param {mixed} item
 			given item to test against
 		@returns {boolean}
 			true, if type of given item is 'string'
@@ -185,13 +184,13 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/**
 		test: is o an object but not null or Array object? (simple test)
-		@param {*} item
+		@param {mixed} item
 			given item to test against
 		@returns {boolean}
 			true, if type of given item is 'object'
 	*/
 	function isObj (item) {
-		return item !== null && typeof item === 'object' && !Array.isArray(item);
+		return item !== null && !Array.isArray(item) && typeof item === 'object';
 	}
 
 	/**
@@ -211,70 +210,57 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/**
 		create deep copy of an object.
-		IMPORTANT: Simplified, because it will only be used for dElement
-			declaration objects
+		IMPORTANT: Simplified, because it will only be used for
+			dElement declaration objects
 		@param {object} o
 			object to be cloned
 		@returns {object}
-			the copy of o
+			the cloned copy of o
 	*/
 	function oCpy (o) {
-		var no = {},
-			p, op;
+		var no, p;
 
-		for (p in o) {
-			if (hasOwn(o, p)) {
-				op = o[p];
-				if (Array.isArray(op)) {
-					no[p] = _slice.call(op, 0);
-				}
-				else if (isObj(op)) {
-					no[p] = oCpy(op);
-				}
-				else {
-					no[p] = op;
-				}
-			}
+		try {
+			return glob.structuredClone(o); // will fail on e.g. functions
 		}
-		return no;
+		catch (exc) {
+			console.log('using fallback of oCpy')
+			if (Array.isArray(o)) {
+				return o.map(function (itm) {
+					return oCpy(itm);
+				});
+			}
+			else if (isObj(o)) {
+				no = {};
+				for (p in o) {
+					if (hasOwn(o, p)) {
+						no[p] = oCpy(o[p]);
+					}
+				}
+				return no;
+			}
+			return o;
+		}
 	}
 
-	/* throw error */
-	dError = (function () {
-		var F;
+	/** throw error
+		@param {string} message error message
+		@name dError */
+	function dError (message) {
+		var err;
 
-		/** throw error
-			@param {string} message error message
-			@class
-			@name dError */
-		function dErr (message) {
-			var err;
-
-			if (!this || !(this instanceof Error)) {
-				throw new dError(message);
-			}
-
-			this.message = 'dElement Error:\n' + message + '\n';
-			this.name = 'dError';
-			err = new Error(this.message);
-			err.name = this.name;
-			this.stack = err.stack;
-			console.error(this.message);
-			if (isMeth(console, 'trace')) {
-				console.trace(arguments);
-			}
+		if (!this || !(this instanceof Error)) {
+			throw new dError(message);
 		}
 
-		if (isMeth(Object, 'create')) {
-			dErr.prototype = Object.create(Error.prototype);
-		}
-		else {
-			F = function () {};
-			F.prototype = Error.prototype;
-			dErr.prototype = new F();
-		}
-		return dErr;
-	})();
+		this.message = 'dElement Error:\n' + message + '\n';
+		this.name = 'dError';
+		err = new Error(this.message);
+		err.name = this.name;
+		this.stack = err.stack;
+		console.error(this.message);
+	}
+	dError.prototype = Object.create(Error.prototype);
 
 	/** map property names of an object.
 
@@ -316,7 +302,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/** multi-properties. These properties may appear multiple times inside a object
 		declaration, postfixed by an underscore and an unique identifier
 		@type {Array} */
-	multiProps = ['text', 'event', 'attribute', 'setif', 'html', 'child',
+	multiProps = ['text', 'event', 'attribute', 'setif', 'setifelse', 'html', 'child',
 		'comment', 'collect'];
 
 	/** save element reference if one of these props appears
@@ -451,6 +437,15 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/**
 		Set a property "prop" of el to "val".
 		Falls back to setAttribute if prop set fails
+
+		@param el {NodeElement}
+			Reference to an element to set a property to
+		@param prop {string}
+			Name of the property/attribute to set
+		@param val {mixed}
+			The property/attribute value
+		@returns {NodeElement}
+			The element reference
 	*/
 	function setProp (el, prop, val) {
 		var lcProp = prop.toLowerCase(),
@@ -516,9 +511,14 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		*/
 		try {
 			el[rProp] = val;
-			if (el[rProp] !== val && lcProp !== 'href') {
-				/* throw error to apply 'catch' branch */
-				throw new Error('value type mismatch in property ' + prop);
+
+			/*
+				Check if re-read value is the same as 'val'.
+				skip 'href' and 'src'; they may differ when expanded to a real path
+			*/ /* eslint-disable-next-line eqeqeq */
+			if (el[rProp] != val && lcProp !== 'href' && lcProp !== 'src') {
+				/* throw error => move to 'catch' branch */
+				throw new dError('value type mismatch in property ' + prop);
 			}
 		}
 		catch (ex) {
@@ -528,33 +528,102 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	}
 
 	/**
-		set a property if condition in declaration object is truthy
+		set a property if a condition in declaration object is truthy
+
+		@param {nodeElement} el
+			Reference to an element to set a property to
+		@param {object} pobj
+			Object with properties 'name', 'value' and 'condition'
+		@param {string} pobj.name
+			Property to set if condition is met
+		@param {mixed} pobj.value
+			Property value to set if condition is met
+		@param {boolean} pobj.condition
+			Value or expression which is truthy / falsy
 	*/
 	function setPropIf (el, pobj) {
-		if (isObj(pobj) && hasOwn(pobj, 'name') && hasOwn(pobj, 'value')) {
-			if (hasOwn(pobj, 'condition') && Boolean(pobj.condition)) {
-				if (pobj.name !== 'child') {
-					setProp(el, pobj.name, pobj.value);
-				}
-				else if (isObj(pobj.value)) {
-					appendTree.call(el, pobj.value);
-				}
+		if (!isObj(pobj)) { return; }
+
+		pobj = mapNames(pobj, {cond: 'condition'});
+
+		if (
+			checkProperties(pobj, ['name', 'value', 'condition']) &&
+			pobj.condition === true
+		) {
+			if (pobj.name !== 'child') {
+				setProp(el, pobj.name, pobj.value);
+			}
+			else if (isObj(pobj.value)) {
+				appendTree.call(el, pobj.value);
 			}
 		}
+	}
+
+	/**
+		set a property value if a condition in declaration object is truthy
+		otherwise set a different property value.
+		Note that this sets the property either way (unlike setPropIf) unless
+		„condition“ is set to NULL
+
+		@param {nodeElement} el
+			Reference to an element to set a property to
+		@param {object} pobj
+			Object with properties 'name', 'value_true', 'value_false' and 'condition'
+		@param {string} pobj.name
+			Property name to set (always)
+		@param {mixed} pobj.value_true
+			Property value to set if condition is met
+		@param {mixed} pobj.value_false
+			Property value to set if condition is NOT met
+		@param {boolean} pobj.condition
+			Value or expression which is truthy / falsy
+	*/
+	function setPropIfElse (el, pobj) {
+		var val;
+
+		if (!isObj(pobj)) { return; }
+
+		pobj = mapNames(pobj, {cond: 'condition'});
+
+		if (
+			checkProperties(
+				pobj,
+				['name', 'value_true', 'value_false', 'condition']
+			) &&
+			pobj.condition !== null
+		) {
+			val = (pobj.condition === true)
+				? pobj.value_true
+				: pobj.value_false;
+
+			if (pobj.name !== 'child') {
+				setProp(el, pobj.name, val);
+			}
+			else if (isObj(val)) {
+				appendTree.call(el, val);
+			}
+		}
+	}
+
+	/**
+		check if ALL properties in 'props' are existant in 'obj'
+	*/
+	function checkProperties (obj, props) {
+		if (!isObj(obj) || !Array.isArray(props)) {
+			throw new TypeError('checkProperties: "obj" or "props" of wrong type');
+		}
+		return props.every(function (item) {
+			return hasOwn(obj, item);
+		});
 	}
 
 	/**
 		map property names. returns base name of 'multi' properties
 	*/
 	function mapMultiProps (p) {
-		var uscoPos = p.indexOf('_'),
-			base;
-
-		if (uscoPos > 0) { /* underscore found */
-			base = p.substring(0, uscoPos);
-			if (multiProps.indexOf(base) > -1) {
-				p = base;
-			}
+		var base = p.split('_', 1)[0];
+		if (multiProps.indexOf(base) > -1) {
+			p = base;
 		}
 		return p;
 	}
@@ -628,7 +697,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var step = 1,
 			start = 0,
 			cnt = 1,
-			parr = ['chk', 'sel'],
+			pArr = ['chk', 'sel'],
 			isdeep = hasOwn(s, 'loopdeep'),
 			frg, i, o, lprop, lobj, lcnt;
 
@@ -640,7 +709,24 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		delete s[lprop];
 
 		/* check if lobj is either a valid object or a numeric value */
-		if (isObj(lobj) && hasOwn(lobj, 'count') && !isNaN(lobj.count)) {
+		if (
+			isObj(lobj) && (
+				(hasOwn(lobj, 'count') && !isNaN(lobj.count)) ||
+				(hasOwn(lobj, 'values') && Array.isArray(lobj.values))
+			)
+		) {
+
+			/*
+				set property 'count' from array length of 'values' if it was omitted
+				or if count value is greater than array length; but not, if property
+				'valuesrepeat' is set (would force set 'count' to array length otherwise)
+			*/
+			if (Array.isArray(lobj.values) && (
+				isNaN(lobj.count) ||
+				(lobj.count > lobj.values.length && !hasOwn(lobj, 'valuesrepeat'))
+			)) {
+				lobj.count = lobj.values.length;
+			}
 
 			/* validate loop values count, step and start */
 			cnt = Number(lobj.count);
@@ -670,7 +756,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			}
 
 			/* validate chk/sel properties (checked or selected elements) */
-			parr.forEach(function (item) {
+			pArr.forEach(function (item) {
 				if (hasOwn(lobj, item)) {
 					if (!Array.isArray(lobj[item]) && isNaN(lobj[item])) {
 						throw new dError(
@@ -703,13 +789,19 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				config: lobj
 			});
 
-			/* set checked/selected if one of the properties from "parr" exists */
-			if (parr.some(hasOwn.bind(null, lobj))) {
+			/* make values available to outside */
+			extcount = {
+				c: lcnt,
+				n: i
+			};
+
+			/* set checked/selected if one of the properties from "pArr" exists */
+			if (pArr.some(hasOwn.bind(null, lobj))) {
 				o = setCSFlags({
 					declaration: o,
 					config: lobj,
 					loopcount: lcnt,
-					properties: parr
+					properties: pArr
 				});
 			}
 
@@ -717,9 +809,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			appendTree.call(frg, o);
 			lcnt++;
 		}
-		// write it back to s
-		s[lprop] = lobj;
 
+		/* write it back to s */
+		s[lprop] = lobj;
 		return frg;
 	}
 
@@ -750,9 +842,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			phreg, p, cc, v;
 
 		/* RegExp to match all parts of "n" and "c" placeholders */
-		phreg = /\!\!(?:([+-]?\d+(?:\.\d+)?)[•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
-				/*  !!  |   mul number     |mul sign| nc | add/sub number  |  !!  */
-				/*      |      [1]         |        | [2]|      [3]        |      */
+		phreg = /\!\!(?:([+-]?\d+(?:\.\d+)?)[·•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
+				/*  !!  |   mul number     |mul sign | nc | add/sub number  |  !!  */
+				/*      |      [1]         |optional | [2]|      [3]        |      */
 
 		/* handle array index if "values" propery is an array */
 		if (hasOwn(lobj, 'values')) {
@@ -883,20 +975,23 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 	/**
 		add current element reference to collection
+
+		@param {array|object} sc
+			reference to collection array or object
+		@param {NodeElement} el
+			reference to newly created Element
 	*/
 	function collectElRef (sc, el) {
 		if (Array.isArray(sc)) {
 			sc.push(el);
 		}
-		else if (isObj(sc) && hasOwn(sc, 'obj') && hasOwn(sc, 'name') && isObj(sc.obj)) {
-			if (sc.obj[sc.name] === undefined) {
-				sc.obj[sc.name] = el;
-			}
-			else {
+		else if (isObj(sc) && checkProperties(sc, ['obj', 'name']) && isObj(sc.obj)) {
+			if (sc.obj[sc.name] !== undefined) {
 				throw new dError(
 					'duplicate declaration of ' + sc.name + ' in property "collect"'
 				);
 			}
+			sc.obj[sc.name] = el;
 		}
 		else {
 			throw new dError('Value of property "collect" must be an array or an object' +
@@ -913,7 +1008,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		if (sdata.lp === 'id') {
 			rObj.i[pr] = sdata.el;
 		}
-		else if (sdata.lp === 'name') {
+
+		if (sdata.lp === 'name') {
 			if (Array.isArray(rObj.n[pr])) {
 				rObj.n[pr].push(sdata.el);
 			}
@@ -951,8 +1047,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			att.forEach(setAttribs.bind(null, el));
 		}
 		else if (
-			isNode(el) && isObj(att) && hasOwn(att, 'name') &&
-			hasOwn(att, 'value') && isStr(att.name)
+			isNode(el) && isObj(att) && checkProperties(att, ['name', 'value']) &&
+			isStr(att.name)
 		) {
 			if (att.name.toLowerCase() === 'style') {
 				/* setAttribute with "style" fails in some browsers, handle it */
@@ -993,7 +1089,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		modeChars[MODE_NAME]    = {attrName: 'name'};
 		modeChars[MODE_TYPE]    = {attrName: 'type'};
 		modeChars[MODE_VALUE]   = {attrName: 'value', stop: false};
-		/* eslint-enable no-multi-spaces */
 
 		for (pr in modeChars) {
 			if (hasOwn(modeChars, pr)) {
@@ -1011,16 +1106,17 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		}
 
 		/**
-		* callback for [].filter in joinClassNames: detect duplicate elements in array
-		*
-		* @param {$_TYPE_$} cn
-		*
-		* @param {$_TYPE_$} ix
-		*
-		* @param {$_TYPE_$} arr
-		*
-		* @returns {$_TYPE_$}
-		*
+			callback for [].filter in joinClassNames():
+			detect duplicate elements in array
+
+			@param {$_TYPE_$} cn
+
+			@param {$_TYPE_$} ix
+
+			@param {$_TYPE_$} arr
+
+			@returns {boolean}
+
 		*/
 		function removeDupes (cn, ix, arr) {
 			return ix === arr.indexOf(cn);
@@ -1077,9 +1173,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				}
 			}
 
-			/* remove possible ETX, leading and trailing whitespace in string
+			/* remove possible enclosed ETX, leading and trailing whitespace in string
 				and append ETX end marker */
-			str = str.replace(/^\s*(.*)\s*$/g, '$1').replace(ETX, '') + ETX;
+			str = str.trim().replace(ETX, '') + ETX;
 			len = str.length;
 
 			/* if first char is in modeChars, "str" doesn't start with element name */
@@ -1087,7 +1183,8 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			if (hasOwn(modeChars, ch)) {
 				mode = ch;
 				i++;
-				if (!((/\$[a-z][a-z1-6]?/i).test(str))) { /* tag name not defined */
+
+				if (!((/\$\s*[a-z][a-z1-6]?/i).test(str))) { /* tag name not defined */
 					pError('extended syntax without element node name definition\n"' +
 						str + '"');
 				}
@@ -1195,13 +1292,20 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	/* ===================  NODE TREE FUNCTIONS ====================== */
 
 	/** convert "txt" to DOM text node */
-	function textNode (txt) {
+	function textNode (txt, addspc) {
+		var spc = (addspc) ? ' ' : '';
+
 		if (Array.isArray(txt)) {
-			return document.createTextNode(txt.join(''));
+			return document.createTextNode(txt.join(spc) + spc);
 		}
-		return isTextNode(txt)
-			? txt
-			: document.createTextNode(txt);
+		else if (typeof txt === 'string' || typeof txt === 'number') {
+			return document.createTextNode(txt + spc);
+		}
+		else if (isTextNode(txt)) {
+			if (addspc) { txt.nodeValue += spc; }
+			return txt;
+		}
+		throw new TypeError('textnode: unsupported type. ' + JSON.stringify(txt));
 	}
 
 	/**
@@ -1335,7 +1439,6 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	*/
 	function appendTree (dcl) {
 		var s = createTree(dcl);
-
 		if (s) {
 			this.appendChild(s);
 		}
@@ -1440,6 +1543,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			case 'text':
 				frg.appendChild(textNode(s[prop]));
 				break;
+			case 'text-ws':
+				frg.appendChild(textNode(s[prop], true));
+				break;
 			case 'html':
 				addNodes(frg, s[prop]);
 				c++;
@@ -1476,7 +1582,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			in case of an unrecoverable error.
 	*/
 	function createTree (s) {
-		var frg, lcProp, newEl, prop, sp;
+		var frg, lcProp, newEl, prop;
 
 		/* array of element declarations without common parent element */
 		if (Array.isArray(s)) {
@@ -1502,7 +1608,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		/* loop: duplicate elements n times and replace placeholder */
 		if (hasOwn(s, 'loop') || hasOwn(s, 'loopdeep')) {
-			return loopDecl(s);
+			isInLoop = true;
+			ldec = loopDecl(s);
+			isInLoop = false;
+			return ldec;
 		}
 
 		/* normalize shortcut keywords */
@@ -1542,8 +1651,9 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			throw new dError('type of property "element" must be string');
 		}
 
-		/* uses string parser if value of "s.element" contains chars other than a-z1-6 */
-		if ((/[^a-z1-6]/i).test(s.element)) {
+		/* uses string parser if value of "s.element" contains chars other than
+			"a-z", "0-9" or "-" */
+		if ((/[^a-z0-9\-]/i).test(s.element)) {
 			s = parseElemStr(s);
 		}
 
@@ -1552,7 +1662,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			testVoidAppend(s);
 		}
 
-		/** create Element and set certain properties before main loop to avoid some
+		/** create element and set certain properties before main loop to avoid some
 			browser bugs.
 
 			Bug in IE8 and Opera <= 12: If "type" is not assigned as
@@ -1560,12 +1670,13 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			might be lost.
 		*/
 		newEl = document.createElement(s.element);
+
 		formProps.forEach(function (pr) {
 			if (hasOwn(s, pr)) {
-				setProp(newEl, pr, s[pr]);
+				setProp(this, pr, s[pr]);
 				delete s[pr];
 			}
-		});
+		}, newEl);
 
 		/* loop all properties */
 		/* eslint-disable guard-for-in */
@@ -1574,6 +1685,10 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 			/* save element reference when prop is in saveProps */
 			if (isObj(refs) && saveProps.indexOf(lcProp) > -1) {
+				if (isInLoop) {
+					throw new dError('can\'t use "elrefs" in a loop for now.');
+				}
+
 				refs = saveRefs(refs, {
 					s: s,
 					el: newEl,
@@ -1590,68 +1705,81 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 			/* handle name of a multi-property */
 			lcProp = mapMultiProps(lcProp);
 
-			sp = s[prop];
-
 			/* handle property value according to property name */
 			switch (lcProp) {
 
 			/* collect element references */
 			case 'collect':
-				collectElRef(sp, newEl);
+				if (isInLoop) {
+					throw new dError('can\'t use "collect" in a loop for now.');
+				}
+
+				collectElRef(s[prop], newEl);
 				break;
 
 			/* create a text node */
 			case 'text':
-				newEl.appendChild(textNode(sp));
+				newEl.appendChild(textNode(s[prop]));
+				break;
+
+			/* create a text node with trailing whitespace */
+			case 'text-ws':
+				newEl.appendChild(textNode(s[prop], true));
 				break;
 
 			/* create a comment node */
 			case 'comment':
-				addComment(newEl, sp);
+				addComment(newEl, s[prop]);
 				break;
 
 			/* process sub declaration object or declaration array */
 			case 'child':
-				appendChildNodes(newEl, sp);
+				appendChildNodes(newEl, s[prop]);
 				break;
 
 			/* add eventhandler to current element */
 			case 'event':
-				pushEvt(newEl, sp);
+				pushEvt(newEl, s[prop]);
 				break;
 
 			/* process html string */
 			case 'html':
-				addNodes(newEl, sp);
+				addNodes(newEl, s[prop]);
 				break;
 
 			/*  enforced usage of setAttribute() */
 			case 'attribute':
-				setAttribs(newEl, sp);
+				setAttribs(newEl, s[prop]);
 				break;
 
 			/* css styles */
 			case 'style':
-				setStyles(newEl, sp);
+				setStyles(newEl, s[prop]);
 				break;
 
-			/* set property on condition */
+			/* set a property on condition */
 			case 'setif':
-				setPropIf(newEl, sp);
+				setPropIf(newEl, s[prop]);
+				break;
+
+			/* set a property value on condition */
+			case 'setifelse':
+				setPropIfElse(newEl, s[prop]);
 				break;
 
 			/* init functions */
 			case 'init':
 			case 'initnorun':
-				pushInit(newEl, sp);
+				pushInit(newEl, s[prop]);
 				break;
 
 			/* anything else will be treated as property/attribute of newEl */
 			default:
-				setProp(newEl, prop, sp);
+				setProp(newEl, prop, s[prop]);
 				break;
 			}
 		}
+
 		/* eslint-enable guard-for-in */
 		return newEl;
 	}
@@ -1669,7 +1797,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		var dtree;
 
 		if (!Array.isArray(decl) && !isObj(decl)) {
-			throw new dError('Parameter has been omitted or value is not an object/array');
+			throw new dError('Declaration has been omitted or value is not an object/array');
 		}
 		/** collect events
 			@type {Array} */
@@ -1708,6 +1836,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 
 		'beforeEnd' or
 		K345.DAPPEND_LAST or
+		K345.DAPPEND_LASTCHILD or
 		K345.DAPPEND_APPEND  => append to 'elem' (default)
 
 		'beforeBegin' or
@@ -1777,10 +1906,12 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 				while ((elc = elem.lastChild)) {
 					elem.removeChild(elc);
 				}
-				/* eslint-disable-next-line no-fallthrough */
+				/* eslint-disable-next-line spaced-comment */
+				/*jsl:fallthru*/
 			case 'beforeEnd':
 			case K345.DAPPEND_APPEND:
 			case K345.DAPPEND_LAST:
+			case K345.DAPPEND_LASTCHILD:
 			default:
 				elem.appendChild(nodes);
 				break;
@@ -1800,6 +1931,12 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 		@constant
 	*/
 	K345.DAPPEND_LAST = 0;
+
+	/** append as last child of element (default).
+		mode flag for {@link K345.dAppend()}
+		@constant
+	*/
+	K345.DAPPEND_LASTCHILD = 0;
 
 	/** insert before element.
 		mode flag for {@link K345.dAppend()}
@@ -1831,7 +1968,7 @@ K345.voidElements = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col
 	*/
 	K345.DAPPEND_WIPE = 5;
 
-})(K345.attrNames, K345.voidElements);
+})(this, K345.attributeNames, K345.voidElementNames);
 
 /* @@CODEEND DELEM */
 
