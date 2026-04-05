@@ -2,13 +2,13 @@ Sorry, no real docs yet :disappointed:
 
 for now:
 * read the (mostly) [german doc](http://javascript.knrs.de/delement/?lang=en)
-  (maybe with a little help of a translation service). Code examples are in english.
-* view [test page](http://res.knrs.de/js/delement/delement_test.html) for usage examples.  (**caution**! it's a test page, includes invalid test cases)
+  (maybe with a little help of a translation service). Code examples and (small) parts of the docs are in english.
+* view [test page](http://res.knrs.de/js/delement/delement_test.html) for usage examples.  (**caution**! it's a test page, includes intentional invalid test cases)
 * read the comments in delement.js
 
 
 # dElement()
-_2006-2023_
+_2006-2023_; 2025-2026
 
 Create DOM node tree.
 
