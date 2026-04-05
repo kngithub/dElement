@@ -65,7 +65,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		skipProps, saveProps, formProps, boolProps, multiProps,
 
 		/* functions */
-		hasOwn, dError, isNode, isEl, isAppendable, isTextNode, parseElemStr, strToNodes;
+		hasOwn, isNode, isEl, isAppendable, isTextNode, parseElemStr;
 
 	/* ==============  COMMON FUNCTIONS  ================= */
 
@@ -224,7 +224,6 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 			return glob.structuredClone(o); // will fail on e.g. functions
 		}
 		catch (exc) {
-			console.log('using fallback of oCpy')
 			if (Array.isArray(o)) {
 				return o.map(function (itm) {
 					return oCpy(itm);
@@ -578,7 +577,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		@param {boolean} pobj.condition
 			Value or expression which is truthy / falsy
 	*/
-	function setPropIfElse (el, pobj) {
+	function setPropValueIf (el, pobj) {
 		var val;
 
 		if (!isObj(pobj)) { return; }
@@ -1311,87 +1310,39 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 	/**
 		convert HTML string (as used with innerHTML) to DOM node tree.
 		@function
-		@param {string} hstr
+		@param {string} htmlstr
 			(hopefully valid) HTML string
-		@returns {HTMLElement|DocumentFragment}
-			created DOM Element/Fragment with child nodes
+		@returns {documentFragment}
+			created DOM documentFragment with child nodes
 	*/
-	strToNodes = (function () {
-		var el = document.createElement('template'),
-			isTmpl = 'content' in el,
-			createParent;
+	function strToNodes (htmlstr) {
+		var txt = '',
+			tmpl;
 
-		if (isTmpl) {
-			/* use HTML <template> element if available */
-			createParent = function () {
-				return document.createElement('template');
-			};
+		try {
+			tmpl = document.createElement('template');
+			tmpl.innerHTML = htmlstr;
+
+			/* the 'content' property of the template element already
+				references a documentFragment, so we're done */
+			return tmpl.content;
 		}
-		else {
-			/* if HTML element 'template' is not available, determine best matching
-				parent element or use 'div' otherwise */
-			createParent = (function (parlist, str) {
-				var elp = 'div',
-					m = str.match(/\<\s*([a-z][a-z1-6]*)/i);
-
-				if (m && m.length > 1 && hasOwn(parlist, m[1])) {
-					elp = parlist[m[1]];
-				}
-				return document.createElement(elp);
-			}).bind(null, {
-				/* define parent elements for some element types. */
-				tr: 'tbody', tbody: 'table', thead: 'table', th: 'tr', td: 'tr',
-				tfoot: 'table', caption: 'table', 'option': 'select', li: 'ul',
-				dd: 'dl', dt: 'dl', optgroup: 'select', figcaption: 'figure',
-				menuitem: 'menu', legend: 'fieldset', summary: 'details'
-			});
-		}
-
-		return function (hstr) {
-			var d = createParent(hstr),
-				txt = '',
-				frg, fc;
-
-			/* Applying innerHTML directly to an fragment doesn't work. Using a
-				dummy element and then moving it's child nodes to the fragment does the
-				trick.
+		catch (ex) {
+			/* assigning "htmlstr" with innerHTML will fail if content-type of document
+				is application/xhtml+xml AND either named entities other than &gt, &lt,
+				&amp, &quot, &apos are used OR if "str" contains certain illegal HTML
 			*/
-			try {
-				d.innerHTML = hstr;
-
-				/* if 'el' is a <template> element, it's 'content' property already
-					references a documentFragment and we're done */
-				if (isTmpl) {
-					frg = d.content;
-				}
-				else {
-					/* move all elements to fragment */
-					frg = document.createDocumentFragment();
-					while ((fc = d.firstChild)) {
-						frg.appendChild(fc);
-					}
-				}
+			if (ex.code === 12) {
+				txt = 'ERROR.\nHTML string most likely contains illegal HTML or ' +
+					'uses named entities (restricted when using content-type ' +
+					'application/xhtml+xml.\nuse numeric entities instead)\n\n';
 			}
-			catch (ex) {
-				/* assigning "str" with innerHTML will fail if content-type of document
-					is application/xhtml+xml AND either named entities other than &gt, &lt,
-					&amp, &quot, &apos are used OR if "str" contains certain illegal HTML
-				*/
-				if (ex.code === 12) {
-					txt = 'ERROR.\nHTML string most likely contains illegal HTML or ' +
-						'uses named entities (restricted when using content-type ' +
-						'application/xhtml+xml.\nuse numeric entities instead)\n\n';
-				}
-				throw new dError(
-					txt + 'Error code: ' + ex.code + '\nError message: ' + ex.message +
-						'\nContent (leading 200 chars):\n"' + hstr.substring(0, 200) + '…"'
-				);
-			}
-
-			/* return fragment with children */
-			return frg;
-		};
-	})();
+			throw new dError(
+				txt + 'Error code: ' + ex.code + '\nError message: ' + ex.message +
+					'\nContent (leading 200 chars):\n"' + htmlstr.substring(0, 200) + '…"'
+			);
+		}
+	}
 
 	/** appends elements, DOM tree or HTML string to a given parent
 		node element.
@@ -1406,9 +1357,8 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		if (isAppendable(item)) {
 			el.appendChild(item);
 		}
-
-		/* handle HTML string */
 		else if (isStr(item)) {
+			/* handle HTML string */
 			if (item === '') { return el; }
 			if (isEl(el)) { /* a HTML element */
 				el.insertAdjacentHTML('beforeend', item);
@@ -1764,7 +1714,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 
 			/* set a property value on condition */
 			case 'setifelse':
-				setPropIfElse(newEl, s[prop]);
+				setPropValueIf(newEl, s[prop]);
 				break;
 
 			/* init functions */
