@@ -42,7 +42,7 @@ var a = K345.dElement({
     }
 });
 ```
-HTML representation of above tree would be (minus line breaks and indentation):
+If written as HTML, markup representation of above tree would be (minus line breaks and indentation):
 
 ```html
 <a href="/" title="Home">
@@ -125,6 +125,8 @@ var inp2 = K345.dElement({
 // code to append elements to DOM tree goes here
 ...
 ```
+
+markup representation:
 ```html
 <input type="button" class="foo bar" id="mybutton">
 <input type="text" class="foo" id="myinput" value="my.name@example.org">
@@ -142,6 +144,8 @@ var ul2 = K345.dElement({
     }
 });
 ```
+
+markup representation:
 ```html
 <ul>
     <li id="item-1">0 times 2 plus 1 equals <b>1</b></li>
@@ -186,6 +190,8 @@ var el = K345.dElement({
     }
 });
 ```
+
+markup representation:
 ```html
 <span>A </span>
 <span>B </span>
@@ -219,7 +225,7 @@ dAppend calls dElement and appends created elements to an existing element in DO
 K345.dAppend(
     String <element id> | Node <reference to element>,
     Object <dElement declaration>
-    [, Const|String <appendmode> = K345.DAPPEND_APPEND ]
+    [, DAppend_Const|String <appendmode> = K345.DAPPEND_APPEND ]
 );
 ```
 
