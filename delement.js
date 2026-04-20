@@ -8,13 +8,15 @@
 'use strict';
 
 /* %% devel on %% */
-	/* eslint-disable -- internal stuff */
-	/*global K345, document*/
-	/** @namespace */
-	var K345 = K345 || {};
-	/* eslint-enable */
 
-	/* eslint new-cap: ["error", { "newIsCapExceptions": ["dError"] }] */
+/* eslint-disable -- internal stuff */
+/*global K345, document*/
+/** @namespace */
+var K345 = K345 || {};
+/* eslint-enable */
+
+/* eslint new-cap: ["error", { "newIsCapExceptions": ["dError"] }] */
+/* eslint prefer-destructuring: "off" */
 
 /* %% devel off %% */
 
@@ -22,7 +24,7 @@
 
 /** conversion table for HTML-attribute names
 	@type {object} */
-K345.attributeNames = K345.attrNames || {
+K345.attributeNames = K345.attributeNames || {
 	acceptcharset: 'acceptCharset', accesskey: 'accessKey', alink: 'aLink',
 	bgcolor: 'bgColor', cellindex: 'cellIndex', cellpadding: 'cellPadding',
 	cellspacing: 'cellSpacing', charoff: 'chOff', 'class': 'className',
@@ -38,34 +40,45 @@ K345.attributeNames = K345.attrNames || {
 
 /** names of HTML elements with content type "void"
 	@type {Array} */
-K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 'col',
+K345.voidElementNames = K345.voidElementNames || ['area', 'base', 'basefont', 'br', 'col',
 	'command', 'embed', 'frame', 'hr', 'img', 'input', 'isindex', 'keygen', 'link', 'meta',
 	'param', 'source', 'track', 'wbr'];
+
+/** define parent elements for some element types.
+	@type {Object} */
+K345.elementParent = K345.elementParent || {
+	tr: 'tbody|thead|table', tbody: 'table', thead: 'table', th: 'tr', td: 'tr',
+	tfoot: 'table', caption: 'table', 'option': 'select|datalist|optgroup', li: 'ul|olmenu',
+	dd: 'dl', dt: 'dl', optgroup: 'select', figcaption: 'figure',
+	menuitem: 'menu', legend: 'fieldset|optgroup', summary: 'details'};
 
 /* @@CODESTART DELEM "Javascript" */
 
 /**
 	dElement / dAppend
-	requires Array.isArray()
-	requires Array.prototype.filter()
-	requires Array.prototype.forEach()
-	requires Array.prototype.indexOf()
-	requires Array.prototype.some()
-	requires Function.prototype.bind()
-	requires K345.attrNames
-	requires K345.voidElements
+	requires K345.attributeNames
+	requires K345.voidElementNames
+	requires K345.elementParent
 */
-(function (glob, attrNames, voidElems) {
-	/* internal vars */
+(function (glob) {
 	var dAppend_regex = (/[#\.=\[\]:\s]+/),
+
+		/* check for valid parent element */
+		enableParentCheck = true,
+		isChildDeclaration = false,
+		lastElement,
+
+		/* internal */
+		eventStack, initStack, refs, loopdepth, ldec,
 		isInLoop = false,
-		eventStack, initStack, refs, loopdepth, ldec, extcount,
 
 		/* predefined data */
 		skipProps, saveProps, formProps, boolProps, multiProps,
 
 		/* functions */
 		hasOwn, isNode, isEl, isAppendable, isTextNode, parseElemStr;
+
+	K345.dElement_loopData = {};
 
 	/* ==============  COMMON FUNCTIONS  ================= */
 
@@ -667,6 +680,8 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		}
 	}
 
+	/* ==============  INIT  ================= */
+
 	/**
 		push function reference from init property and element reference to init stack
 	*/
@@ -703,6 +718,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		if (hasOwn(s, 'loop') && isdeep) {
 			throw new dError('You may use only one of "loop" OR "loopdeep", not both.');
 		}
+
 		lprop = (isdeep) ? 'loopdeep' : 'loop';
 		lobj = s[lprop];
 		delete s[lprop];
@@ -788,12 +804,6 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 				config: lobj
 			});
 
-			/* make values available to outside */
-			extcount = {
-				c: lcnt,
-				n: i
-			};
-
 			/* set checked/selected if one of the properties from "pArr" exists */
 			if (pArr.some(hasOwn.bind(null, lobj))) {
 				o = setCSFlags({
@@ -811,6 +821,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 
 		/* write it back to s */
 		s[lprop] = lobj;
+
 		return frg;
 	}
 
@@ -841,9 +852,9 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 			phreg, p, cc, v;
 
 		/* RegExp to match all parts of "n" and "c" placeholders */
-		phreg = /\!\!(?:([+-]?\d+(?:\.\d+)?)[·•\*]?)?(n|c)([+-]\d+(?:\.\d+)?)?\!\!/gi;
-				/*  !!  |   mul number     |mul sign | nc | add/sub number  |  !!  */
-				/*      |      [1]         |optional | [2]|      [3]        |      */
+		phreg = /\!\!(?:([+-]?\d+(?:\.\d+)?)[·•\*]?)?(n|c)([+-^]\d+(?:\.\d+)?)?\!\!/gi;
+		/*          !!  |   mul number     |mul sign | nc | add/sub number  |  !!  */
+		/*              |      [1]         |optional | [2]|      [3]        |      */
 
 		/* handle array index if "values" propery is an array */
 		if (hasOwn(lobj, 'values')) {
@@ -912,24 +923,38 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		@param {string} ptype
 			placeholder type (n or c for loop value or counter)
 		@param {string} add
-			sum to add (can include leading "+" or "-")
+			sum to add/power of (can include leading "+", "-" or "^")
 		@return {number}
 			final calculated value for placeholder replacement
 	*/ /* eslint-disable-next-line max-params */
 	function loopReplace (cnt, val, matched, mul, ptype, add) {
+		var cv,
+			ispow = false;
+
 		/* determine type of value */
-		var cv = (ptype.toLowerCase() === 'c')
+		cv = (ptype.toLowerCase() === 'c')
 			? cnt /* loop counter */
 			: val; /* calculated value */
 
-		mul = Number(mul);
-		if (!isNaN(mul)) {
-			cv *= mul;
+		if (mul) {
+			mul = Number(mul);
+			if (!isNaN(mul)) {
+				cv *= mul;
+			}
 		}
 
-		add = Number(add);
-		if (!isNaN(add)) {
-			cv += add;
+		if (add) {
+			if (add.indexOf('^') > -1) {
+				add = add.substr(1);
+				ispow = true;
+			}
+
+			add = Number(add);
+			if (!isNaN(add)) {
+				cv = (ispow)
+					? Math.pow(cv, add) // don't use ** -> YUI compressor chokes
+					: cv + add;
+			}
 		}
 		return cv;
 	}
@@ -1027,8 +1052,8 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 	function replaceAttrName (atn) {
 		var lcAtt = atn.toLowerCase();
 
-		return (lcAtt in attrNames)
-			? attrNames[lcAtt]
+		return (lcAtt in K345.attributeNames)
+			? K345.attributeNames[lcAtt]
 			: camelCase(atn);
 	}
 
@@ -1297,7 +1322,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		if (Array.isArray(txt)) {
 			return document.createTextNode(txt.join(spc) + spc);
 		}
-		else if (typeof txt === 'string' || typeof txt === 'number') {
+		else if (isStr(txt) || typeof txt === 'number') {
 			return document.createTextNode(txt + spc);
 		}
 		else if (isTextNode(txt)) {
@@ -1456,14 +1481,19 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 	*/
 	function testVoidAppend (s) {
 		var pp = ['text', 'html', 'child'],
-			prop, lcProp;
+			prop, lcProp, ident;
 
 		/* eslint-disable guard-for-in */
 		for (prop in s) {
 			lcProp = mapMultiProps(prop.toLowerCase());
 			if (pp.indexOf(lcProp) > -1) {
-				throw new dError('content model of element "' + s.element.toUpperCase() +
-				'" is "empty". This element may not contain any child nodes');
+				ident = s.id || s.name || '';
+
+				throw new dError(
+					'content model of element "' + s.element.toUpperCase() +
+					'" is "empty". This element may not contain any child nodes.' +
+					((ident) ? '\n[' + ident + ']' : '')
+				);
 			}
 		}
 		/* eslint-enable guard-for-in */
@@ -1519,6 +1549,28 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 
 		/*  return, if documentFragment has childNodes */
 		return frg;
+	}
+
+	// TODO: remove detection errors
+	function checkParent (elname, last) {
+		var arr;
+
+		// TEMP disabled
+		if (2 == 1 && !isInLoop && last && hasOwn(K345.elementParent, elname)) {
+			console.log(
+				'element: ' + elname,
+				'last: ' + last,
+				'allowed: ' + K345.elementParent[elname]
+			)
+
+			arr = K345.elementParent[elname].split('|');
+			if (arr.indexOf(last) < 0) {
+				throw new Error(
+					elname + ' is not a valid child element of ' + last
+				);
+			}
+		}
+		return document.createElement(elname);
 	}
 
 	/**
@@ -1608,19 +1660,18 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		}
 
 		/* test for declaration of child nodes for empty content type elements */
-		if (voidElems.indexOf(s.element) > -1) {
+		if (K345.voidElementNames.indexOf(s.element) > -1) {
 			testVoidAppend(s);
 		}
 
-		/** create element and set certain properties before main loop to avoid some
-			browser bugs.
+		/** create an element */
+		newEl = (enableParentCheck && isChildDeclaration)
+			? checkParent(s.element, lastElement)
+			: document.createElement(s.element);
 
-			Bug in IE8 and Opera <= 12: If "type" is not assigned as
-			first property on "input" (and maybe other) elements, the "value" property
-			might be lost.
-		*/
-		newEl = document.createElement(s.element);
+		lastElement = s.element;
 
+		/* set some properties for form elements first */
 		formProps.forEach(function (pr) {
 			if (hasOwn(s, pr)) {
 				setProp(this, pr, s[pr]);
@@ -1684,7 +1735,9 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 
 			/* process sub declaration object or declaration array */
 			case 'child':
+				isChildDeclaration = true;
 				appendChildNodes(newEl, s[prop]);
+				isChildDeclaration = false;
 				break;
 
 			/* add eventhandler to current element */
@@ -1773,7 +1826,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 		dAppend: create node tree and append it to an existing element
 
 		@param {HTMLElement|string} elem
-			element reference or id as string
+			element reference, querySelector string or id string
 
 		@param {object} decl
 			element declaration object (see dElement)
@@ -1918,7 +1971,7 @@ K345.voidElementNames = K345.voidElements || ['area', 'base', 'basefont', 'br', 
 	*/
 	K345.DAPPEND_WIPE = 5;
 
-})(this, K345.attributeNames, K345.voidElementNames);
+})(this);
 
 /* @@CODEEND DELEM */
 
